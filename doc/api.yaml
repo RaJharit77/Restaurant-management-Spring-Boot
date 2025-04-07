@@ -1,0 +1,342 @@
+openapi: 3.0.0
+info:
+  title: Restaurant Management API
+  version: 1.0.0
+  description: API pour la gestion des ingrédients, plats et commandes d'un restaurant
+
+paths:
+  /ingredients:
+    get:
+      summary: Liste tous les ingrédients avec leurs détails
+      responses:
+        '200':
+          description: Liste des ingrédients récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IngredientDetails'
+
+  /ingredients/{id}/prices:
+    put:
+      summary: Ajout de nouveaux prix à l'historique d'un ingrédient
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PriceHistoryInput'
+      responses:
+        '200':
+          description: Historique des prix mis à jour avec succès
+        '404':
+          description: Ingrédient non trouvé
+
+  /ingredients/{id}/stockMovements:
+    put:
+      summary: Ajout de nouveaux mouvements de stock à un ingrédient
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/StockMovementInput'
+      responses:
+        '200':
+          description: Mouvements de stock ajoutés avec succès
+        '404':
+          description: Ingrédient non trouvé
+
+  /dishes:
+    get:
+      summary: Liste tous les plats avec leurs ingrédients
+      responses:
+        '200':
+          description: Liste des plats récupérée avec succès
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DishDetails'
+
+  /dishes/{id}/ingredients:
+    put:
+      summary: Ajout/modification la liste des ingrédients d'un plat
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/DishIngredientInput'
+      responses:
+        '200':
+          description: Ingrédients du plat mis à jour avec succès
+        '404':
+          description: Plat non trouvé
+
+  /orders/{reference}:
+    get:
+      summary: Récupèration de la commande par sa référence
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Commande récupérée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetails'
+        '404':
+          description: Commande non trouvée
+
+  /orders/{reference}/dishes:
+    put:
+      summary: Modification la liste des plats d'une commande
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderDishesInput'
+      responses:
+        '200':
+          description: Plats de la commande mis à jour avec succès
+        '400':
+          description: Statut invalide ou transition non autorisée
+        '404':
+          description: Commande non trouvée
+
+  /orders/{reference}/dishes/{dishId}:
+    put:
+      summary: Mise à jour le statut d'un plat dans une commande
+      parameters:
+        - name: reference
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: dishId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDishStatusInput'
+      responses:
+        '200':
+          description: Statut du plat mis à jour avec succès
+        '400':
+          description: Transition de statut invalide
+        '404':
+          description: Commande ou plat non trouvé
+
+components:
+  schemas:
+    IngredientDetails:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        currentPrice:
+          type: number
+        currentStock:
+          type: number
+        unit:
+          $ref: '#/components/schemas/Unit'
+        priceHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceHistory'
+        stockMovements:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockMovement'
+
+    PriceHistoryInput:
+      type: object
+      properties:
+        price:
+          type: number
+        date:
+          type: string
+          format: date-time
+
+    StockMovementInput:
+      type: object
+      properties:
+        movementType:
+          $ref: '#/components/schemas/MovementType'
+        quantity:
+          type: number
+        date:
+          type: string
+          format: date-time
+
+    DishDetails:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        unitPrice:
+          type: number
+        availableQuantity:
+          type: number
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/DishIngredient'
+
+    DishIngredient:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        currentPrice:
+          type: number
+        currentStock:
+          type: number
+        requiredQuantity:
+          type: number
+        unit:
+          $ref: '#/components/schemas/Unit'
+
+    DishIngredientInput:
+      type: object
+      properties:
+        ingredientId:
+          type: integer
+        requiredQuantity:
+          type: number
+
+    OrderDetails:
+      type: object
+      properties:
+        reference:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        status:
+          $ref: '#/components/schemas/StatusType'
+        totalAmount:
+          type: number
+        dishOrders:
+          type: array
+          items:
+            $ref: '#/components/schemas/DishOrderDetails'
+
+    DishOrderDetails:
+      type: object
+      properties:
+        dishId:
+          type: integer
+        dishName:
+          type: string
+        dishPrice:
+          type: number
+        quantity:
+          type: integer
+        status:
+          $ref: '#/components/schemas/StatusType'
+
+    UpdateOrderDishesInput:
+      type: object
+      properties:
+        dishes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DishOrderInput'
+        status:
+          $ref: '#/components/schemas/StatusType'
+
+    DishOrderInput:
+      type: object
+      properties:
+        dishId:
+          type: integer
+        quantity:
+          type: integer
+
+    UpdateDishStatusInput:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusType'
+
+    PriceHistory:
+      type: object
+      properties:
+        price:
+          type: number
+        date:
+          type: string
+          format: date-time
+
+    StockMovement:
+      type: object
+      properties:
+        movementType:
+          $ref: '#/components/schemas/MovementType'
+        quantity:
+          type: number
+        date:
+          type: string
+          format: date-time
+
+    Unit:
+      type: string
+      enum: [G, L, U]
+
+    MovementType:
+      type: string
+      enum: [ENTRY, EXIT]
+
+    StatusType:
+      type: string
+      enum: [CREATED, CONFIRMED, IN_PREPARATION, FINISHED, SERVED, COMPLETED, DELIVERED]
