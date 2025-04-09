@@ -1,8 +1,8 @@
-package com.restaurant.dao;
+package com.rajharit.rajharitsprings.dao;
 
-import com.restaurant.entities.DishOrderStatus;
-import com.restaurant.entities.StatusType;
-import com.restaurant.db.DataBaseSource;
+import com.rajharit.rajharitsprings.entities.DishOrderStatus;
+import com.rajharit.rajharitsprings.entities.StatusType;
+import com.rajharit.rajharitsprings.config.DataBaseSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

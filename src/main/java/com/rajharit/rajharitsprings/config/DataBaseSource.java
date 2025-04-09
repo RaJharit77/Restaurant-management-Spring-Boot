@@ -1,4 +1,4 @@
-package com.rajharit.rajharitsprings.db;
+package com.rajharit.rajharitsprings.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

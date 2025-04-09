@@ -1,7 +1,7 @@
 package com.rajharit.rajharitsprings.dao;
 
 import com.rajharit.rajharitsprings.entities.*;
-import com.rajharit.rajharitsprings.db.DataBaseSource;
+import com.rajharit.rajharitsprings.config.DataBaseSource;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;

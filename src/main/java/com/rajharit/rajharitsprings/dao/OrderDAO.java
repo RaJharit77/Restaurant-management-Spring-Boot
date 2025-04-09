@@ -11,5 +11,6 @@ public interface OrderDAO {
     Order findByReference(String reference);
     Order save(Order order);
     void updateStatus(int orderId, StatusType status);
+    List<Order> findByCustomerId(int customerId);
     void delete(int id);
 }

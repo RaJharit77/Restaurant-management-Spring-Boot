@@ -1,6 +1,6 @@
 package com.rajharit.rajharitsprings.dao;
 
-import com.rajharit.rajharitsprings.db.DataBaseSource;
+import com.rajharit.rajharitsprings.config.DataBaseSource;
 import com.rajharit.rajharitsprings.entities.MovementType;
 import com.rajharit.rajharitsprings.entities.StockMovement;
 import com.rajharit.rajharitsprings.entities.Unit;

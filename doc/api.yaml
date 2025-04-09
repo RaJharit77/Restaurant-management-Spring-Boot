@@ -1,28 +1,121 @@
 openapi: 3.0.0
 info:
   title: Restaurant Management API
+  description: API for managing restaurant ingredients, dishes, and orders
   version: 1.0.0
-  description: API pour la gestion des ingrédients, plats et commandes d'un restaurant
+servers:
+  - url: http://localhost:8080
+    description: Development server
 
 paths:
   /ingredients:
     get:
-      summary: Liste tous les ingrédients avec leurs détails
+      tags: [Ingredients]
+      summary: Get all ingredients
+      description: Retrieve a list of all ingredients with optional price filter
+      parameters:
+        - name: maxPrice
+          in: query
+          description: Maximum price to filter ingredients
+          schema:
+            type: number
+            format: double
       responses:
         '200':
-          description: Liste des ingrédients récupérée avec succès
+          description: Successful operation
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/IngredientDetails'
+                  $ref: '#/components/schemas/Ingredient'
+        '500':
+          description: Internal server error
 
-  /ingredients/{id}/prices:
+    post:
+      tags: [Ingredients]
+      summary: Create new ingredients
+      description: Create one or more new ingredients
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/IngredientInput'
+      responses:
+        '201':
+          description: Ingredients created successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+        '400':
+          description: Invalid input
+        '500':
+          description: Internal server error
+
     put:
-      summary: Ajout de nouveaux prix à l'historique d'un ingrédient
+      tags: [Ingredients]
+      summary: Update existing ingredients
+      description: Update one or more existing ingredients
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/IngredientInput'
+      responses:
+        '200':
+          description: Ingredients updated successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Ingredient'
+        '400':
+          description: Invalid input
+        '404':
+          description: Ingredient not found
+        '500':
+          description: Internal server error
+
+  /ingredients/{ingredientId}:
+    get:
+      tags: [Ingredients]
+      summary: Get ingredient by ID
+      description: Retrieve a specific ingredient by its ID
       parameters:
-        - name: id
+        - name: ingredientId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngredientDetails'
+        '404':
+          description: Ingredient not found
+        '500':
+          description: Internal server error
+
+  /ingredients/{ingredientId}/prices:
+    put:
+      tags: [Ingredients]
+      summary: Update ingredient prices
+      description: Add new prices to the price history of an ingredient
+      parameters:
+        - name: ingredientId
           in: path
           required: true
           schema:
@@ -34,18 +127,24 @@ paths:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/PriceHistoryInput'
+                $ref: '#/components/schemas/PriceInput'
       responses:
         '200':
-          description: Historique des prix mis à jour avec succès
+          description: Prices successfully updated
+        '400':
+          description: Invalid input
         '404':
-          description: Ingrédient non trouvé
+          description: Ingredient not found
+        '500':
+          description: Internal server error
 
-  /ingredients/{id}/stockMovements:
+  /ingredients/{ingredientId}/stockMovements:
     put:
-      summary: Ajout de nouveaux mouvements de stock à un ingrédient
+      tags: [Ingredients]
+      summary: Update ingredient stock movements
+      description: Add new stock movements to an ingredient
       parameters:
-        - name: id
+        - name: ingredientId
           in: path
           required: true
           schema:
@@ -60,28 +159,38 @@ paths:
                 $ref: '#/components/schemas/StockMovementInput'
       responses:
         '200':
-          description: Mouvements de stock ajoutés avec succès
+          description: Stock movements successfully updated
+        '400':
+          description: Invalid input
         '404':
-          description: Ingrédient non trouvé
+          description: Ingredient not found
+        '500':
+          description: Internal server error
 
   /dishes:
     get:
-      summary: Liste tous les plats avec leurs ingrédients
+      tags: [Dishes]
+      summary: Get all dishes
+      description: Retrieve a list of all dishes with their ingredients
       responses:
         '200':
-          description: Liste des plats récupérée avec succès
+          description: Successful operation
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/DishDetails'
+        '500':
+          description: Internal server error
 
-  /dishes/{id}/ingredients:
+  /dishes/{dishId}/ingredients:
     put:
-      summary: Ajout/modification la liste des ingrédients d'un plat
+      tags: [Dishes]
+      summary: Update dish ingredients
+      description: Add or update ingredients for a specific dish
       parameters:
-        - name: id
+        - name: dishId
           in: path
           required: true
           schema:
@@ -96,13 +205,23 @@ paths:
                 $ref: '#/components/schemas/DishIngredientInput'
       responses:
         '200':
-          description: Ingrédients du plat mis à jour avec succès
+          description: Dish ingredients updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DishDetails'
+        '400':
+          description: Invalid input
         '404':
-          description: Plat non trouvé
+          description: Dish not found
+        '500':
+          description: Internal server error
 
   /orders/{reference}:
     get:
-      summary: Récupèration de la commande par sa référence
+      tags: [Orders]
+      summary: Get order by reference
+      description: Retrieve an order by its reference number
       parameters:
         - name: reference
           in: path
@@ -111,17 +230,21 @@ paths:
             type: string
       responses:
         '200':
-          description: Commande récupérée avec succès
+          description: Successful operation
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OrderDetails'
         '404':
-          description: Commande non trouvée
+          description: Order not found
+        '500':
+          description: Internal server error
 
   /orders/{reference}/dishes:
     put:
-      summary: Modification la liste des plats d'une commande
+      tags: [Orders]
+      summary: Update order dishes
+      description: Modify the list of dishes in an order and their quantities
       parameters:
         - name: reference
           in: path
@@ -133,18 +256,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateOrderDishesInput'
+              $ref: '#/components/schemas/OrderUpdateInput'
       responses:
         '200':
-          description: Plats de la commande mis à jour avec succès
+          description: Order dishes updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetails'
         '400':
-          description: Statut invalide ou transition non autorisée
+          description: Invalid input
         '404':
-          description: Commande non trouvée
+          description: Order not found
+        '500':
+          description: Internal server error
 
   /orders/{reference}/dishes/{dishId}:
     put:
-      summary: Mise à jour le statut d'un plat dans une commande
+      tags: [Orders]
+      summary: Update dish status in order
+      description: Update the status of a specific dish in an order
       parameters:
         - name: reference
           in: path
@@ -156,52 +287,85 @@ paths:
           required: true
           schema:
             type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateDishStatusInput'
+        - name: status
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/StatusType'
       responses:
         '200':
-          description: Statut du plat mis à jour avec succès
+          description: Dish status updated successfully
         '400':
-          description: Transition de statut invalide
+          description: Invalid status transition
         '404':
-          description: Commande ou plat non trouvé
+          description: Order or dish not found
+        '500':
+          description: Internal server error
 
 components:
   schemas:
-    IngredientDetails:
+    Ingredient:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         name:
           type: string
-        currentPrice:
+          example: "Tomato"
+        unitPrice:
           type: number
-        currentStock:
-          type: number
+          format: double
+          example: 2.5
         unit:
-          $ref: '#/components/schemas/Unit'
-        priceHistory:
-          type: array
-          items:
-            $ref: '#/components/schemas/PriceHistory'
-        stockMovements:
-          type: array
-          items:
-            $ref: '#/components/schemas/StockMovement'
+          $ref: '#/components/schemas/UnitType'
+        updateDateTime:
+          type: string
+          format: date-time
+          example: "2023-05-15T10:30:00Z"
 
-    PriceHistoryInput:
+    IngredientInput:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Tomato"
+        unitPrice:
+          type: number
+          format: double
+          example: 2.5
+        unit:
+          $ref: '#/components/schemas/UnitType'
+
+    IngredientDetails:
+      allOf:
+        - $ref: '#/components/schemas/Ingredient'
+        - type: object
+          properties:
+            priceHistory:
+              type: array
+              items:
+                $ref: '#/components/schemas/PriceHistory'
+            stockMovements:
+              type: array
+              items:
+                $ref: '#/components/schemas/StockMovement'
+            availableQuantity:
+              type: number
+              format: double
+              example: 50.0
+
+    PriceInput:
       type: object
       properties:
         price:
           type: number
+          format: double
+          example: 2.75
         date:
           type: string
           format: date-time
+          example: "2023-05-16T09:00:00Z"
 
     StockMovementInput:
       type: object
@@ -210,133 +374,176 @@ components:
           $ref: '#/components/schemas/MovementType'
         quantity:
           type: number
-        date:
+          format: double
+          example: 10.0
+        unit:
+          $ref: '#/components/schemas/UnitType'
+        movementDate:
           type: string
           format: date-time
+          example: "2023-05-16T10:00:00Z"
 
     DishDetails:
       type: object
       properties:
         id:
           type: integer
+          example: 1
         name:
           type: string
+          example: "Margherita Pizza"
         unitPrice:
           type: number
+          format: double
+          example: 12.99
         availableQuantity:
           type: number
+          format: double
+          example: 15.0
         ingredients:
           type: array
           items:
             $ref: '#/components/schemas/DishIngredient'
-
-    DishIngredient:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        currentPrice:
-          type: number
-        currentStock:
-          type: number
-        requiredQuantity:
-          type: number
-        unit:
-          $ref: '#/components/schemas/Unit'
 
     DishIngredientInput:
       type: object
       properties:
         ingredientId:
           type: integer
+          example: 1
+        quantity:
+          type: number
+          format: double
+          example: 0.2
+        unit:
+          $ref: '#/components/schemas/UnitType'
+
+    DishIngredient:
+      type: object
+      properties:
+        ingredientId:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Tomato"
+        unitPrice:
+          type: number
+          format: double
+          example: 2.5
+        availableQuantity:
+          type: number
+          format: double
+          example: 50.0
         requiredQuantity:
           type: number
+          format: double
+          example: 0.2
+        unit:
+          $ref: '#/components/schemas/UnitType'
 
     OrderDetails:
       type: object
       properties:
         reference:
           type: string
+          example: "ORD-2023-0001"
         createdAt:
           type: string
           format: date-time
+          example: "2023-05-15T14:30:00Z"
         status:
           $ref: '#/components/schemas/StatusType'
         totalAmount:
           type: number
-        dishOrders:
+          format: double
+          example: 38.97
+        dishes:
           type: array
           items:
-            $ref: '#/components/schemas/DishOrderDetails'
+            $ref: '#/components/schemas/OrderDish'
 
-    DishOrderDetails:
+    OrderDish:
       type: object
       properties:
         dishId:
           type: integer
-        dishName:
+          example: 1
+        name:
           type: string
-        dishPrice:
+          example: "Margherita Pizza"
+        unitPrice:
           type: number
+          format: double
+          example: 12.99
         quantity:
           type: integer
+          example: 3
         status:
           $ref: '#/components/schemas/StatusType'
 
-    UpdateOrderDishesInput:
+    OrderUpdateInput:
       type: object
       properties:
         dishes:
           type: array
           items:
-            $ref: '#/components/schemas/DishOrderInput'
+            $ref: '#/components/schemas/OrderDishUpdate'
         status:
           $ref: '#/components/schemas/StatusType'
 
-    DishOrderInput:
+    OrderDishUpdate:
       type: object
       properties:
         dishId:
           type: integer
+          example: 1
         quantity:
           type: integer
-
-    UpdateDishStatusInput:
-      type: object
-      properties:
-        status:
-          $ref: '#/components/schemas/StatusType'
+          example: 3
 
     PriceHistory:
       type: object
       properties:
         price:
           type: number
+          format: double
+          example: 2.5
         date:
           type: string
           format: date-time
+          example: "2023-05-15T10:30:00Z"
 
     StockMovement:
       type: object
       properties:
+        movementId:
+          type: integer
+          example: 1
         movementType:
           $ref: '#/components/schemas/MovementType'
         quantity:
           type: number
-        date:
+          format: double
+          example: 10.0
+        unit:
+          $ref: '#/components/schemas/UnitType'
+        movementDate:
           type: string
           format: date-time
+          example: "2023-05-15T11:00:00Z"
 
-    Unit:
+    UnitType:
       type: string
       enum: [G, L, U]
+      example: "G"
 
     MovementType:
       type: string
       enum: [ENTRY, EXIT]
+      example: "ENTRY"
 
     StatusType:
       type: string
-      enum: [CREATED, CONFIRMED, IN_PREPARATION, FINISHED, SERVED, COMPLETED, DELIVERED]
+      enum: [CREATED, CONFIRMED, IN_PREPARATION, FINISHED, COMPLETED, SERVED]
+      example: "CREATED"

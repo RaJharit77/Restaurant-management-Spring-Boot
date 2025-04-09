@@ -1,4 +1,4 @@
-package com.rajharit.rajharitsprings.db;
+package com.rajharit.rajharitsprings.config;
 
 import java.sql.Connection;
 import java.sql.SQLException;

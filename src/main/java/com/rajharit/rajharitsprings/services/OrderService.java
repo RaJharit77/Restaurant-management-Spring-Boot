@@ -1,84 +1,145 @@
 package com.rajharit.rajharitsprings.services;
 
-import com.rajharit.rajharitsprings.dao.DishDAO;
-import com.rajharit.rajharitsprings.dao.DishOrderDAO;
+import com.rajharit.rajharitsprings.dtos.*;
+import com.rajharit.rajharitsprings.entities.*;
+import com.rajharit.rajharitsprings.exceptions.BusinessException;
+import com.rajharit.rajharitsprings.exceptions.ResourceNotFoundException;
+import com.rajharit.rajharitsprings.mappers.OrderMapper;
 import com.rajharit.rajharitsprings.dao.OrderDAO;
-import com.rajharit.rajharitsprings.entities.Dish;
-import com.rajharit.rajharitsprings.entities.DishOrder;
-import com.rajharit.rajharitsprings.entities.Order;
-import com.rajharit.rajharitsprings.entities.StatusType;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.rajharit.rajharitsprings.dao.DishDAO;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
+    private final OrderDAO orderDAO;
+    private final DishDAO dishDAO;
+    private final OrderMapper orderMapper;
 
-    @Autowired
-    private OrderDAO orderDAO;
-
-    @Autowired
-    private DishOrderDAO dishOrderDAO;
-
-    @Autowired
-    private DishDAO dishDAO;
-
-    public Order getOrderByReference(String reference) {
-        return orderDAO.findByReference(reference);
+    public OrderService(OrderDAO orderDAO, DishDAO dishDAO, OrderMapper orderMapper) {
+        this.orderDAO = orderDAO;
+        this.dishDAO = dishDAO;
+        this.orderMapper = orderMapper;
     }
 
-    public void updateOrderDishes(String reference, List<DishOrder> dishOrders, StatusType status) {
+    @Transactional(readOnly = true)
+    public OrderDto getOrderByReference(String reference) {
         Order order = orderDAO.findByReference(reference);
         if (order == null) {
-            throw new RuntimeException("Order not found");
+            throw new ResourceNotFoundException("Order not found with reference: " + reference);
         }
 
-        if (status != StatusType.CREATED && status != StatusType.CONFIRMED) {
-            throw new RuntimeException("Invalid status for order update");
-        }
-
-        List<DishOrder> existingDishOrders = dishOrderDAO.findByOrderId(order.getOrderId());
-        for (DishOrder existing : existingDishOrders) {
-            dishOrderDAO.updateStatus(existing.getDishOrderId(), StatusType.CREATED);
-        }
-
-        for (DishOrder dishOrder : dishOrders) {
+        order.getDishOrders().forEach(dishOrder -> {
             Dish dish = dishDAO.findById(dishOrder.getDish().getId());
-            if (dish == null) {
-                throw new RuntimeException("Dish not found: " + dishOrder.getDish().getId());
-            }
-
             dishOrder.setDish(dish);
-            dishOrder.setOrder(order);
-            dishOrder.setStatus(status);
-            dishOrderDAO.save(dishOrder);
-        }
+        });
 
-        order.setStatus(status);
-        orderDAO.updateStatus(order.getOrderId(), status);
+        double totalAmount = order.getDishOrders().stream()
+                .mapToDouble(dishOrder -> dishOrder.getDish().getUnitPrice() * dishOrder.getQuantity())
+                .sum();
+
+        OrderDto dto = orderMapper.toDto(order);
+        dto.setTotalAmount(totalAmount);
+        return dto;
     }
 
-    public void updateDishOrderStatus(String reference, int dishId, StatusType status) {
+    @Transactional
+    public OrderDto updateOrderDishes(String reference, OrderUpdateDto orderUpdate) {
+        if (orderUpdate == null || orderUpdate.getDishes() == null) {
+            throw new BusinessException("Order update data cannot be null");
+        }
+
         Order order = orderDAO.findByReference(reference);
         if (order == null) {
-            throw new RuntimeException("Order not found");
+            throw new ResourceNotFoundException("Order not found with reference: " + reference);
         }
 
-        List<DishOrder> dishOrders = dishOrderDAO.findByOrderId(order.getOrderId());
-        DishOrder target = null;
+        if (orderUpdate.getStatus() != null) {
+            validateStatusTransition(order.getStatus(), StatusType.valueOf(orderUpdate.getStatus()));
+            order.setStatus(StatusType.valueOf(orderUpdate.getStatus()));
+        }
 
-        for (DishOrder dishOrder : dishOrders) {
-            if (dishOrder.getDish().getId() == dishId) {
-                target = dishOrder;
+        List<DishOrder> dishOrders = orderUpdate.getDishes().stream()
+                .map(dto -> {
+                    Dish dish = dishDAO.findById(dto.getDishId());
+                    if (dish == null) {
+                        throw new ResourceNotFoundException("Dish not found with id: " + dto.getDishId());
+                    }
+
+                    DishOrder dishOrder = new DishOrder();
+                    dishOrder.setDish(dish);
+                    dishOrder.setQuantity(dto.getQuantity());
+                    dishOrder.setStatus(
+                            order.getStatus() == StatusType.CONFIRMED ?
+                                    StatusType.CONFIRMED :
+                                    StatusType.CREATED
+                    );
+                    return dishOrder;
+                })
+                .collect(Collectors.toList());
+
+        order.setDishOrders(dishOrders);
+        Order updatedOrder = orderDAO.save(order);
+        return orderMapper.toDto(updatedOrder);
+    }
+
+    @Transactional
+    public void updateDishStatus(String reference, int dishId, StatusType status) {
+        Order order = orderDAO.findByReference(reference);
+        if (order == null) {
+            throw new ResourceNotFoundException("Order not found with reference: " + reference);
+        }
+
+        DishOrder dishOrder = order.getDishOrders().stream()
+                .filter(dishOrderItem -> dishOrderItem.getDish().getId() == dishId)
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Dish with id " + dishId + " not found in order " + reference));
+
+        validateStatusTransition(dishOrder.getStatus(), status);
+
+        dishOrder.setStatus(status);
+
+        orderDAO.save(order);
+    }
+
+    private void validateStatusTransition(StatusType current, StatusType next) {
+        if (current == next) {
+            return;
+        }
+
+        switch (current) {
+            case CREATED:
+                if (next != StatusType.CONFIRMED) {
+                    throw new BusinessException("Invalid status transition from CREATED to " + next);
+                }
                 break;
-            }
+            case CONFIRMED:
+                if (next != StatusType.IN_PREPARATION) {
+                    throw new BusinessException("Invalid status transition from CONFIRMED to " + next);
+                }
+                break;
+            case IN_PREPARATION:
+                if (next != StatusType.FINISHED) {
+                    throw new BusinessException("Invalid status transition from IN_PREPARATION to " + next);
+                }
+                break;
+            case FINISHED:
+                if (next != StatusType.COMPLETED) {
+                    throw new BusinessException("Invalid status transition from FINISHED to " + next);
+                }
+                break;
+            case COMPLETED:
+                if (next != StatusType.SERVED) {
+                    throw new BusinessException("Invalid status transition from COMPLETED to " + next);
+                }
+                break;
+            case SERVED:
+                throw new BusinessException("Cannot change status from SERVED");
+            default:
+                throw new BusinessException("Unknown status: " + current);
         }
-
-        if (target == null) {
-            throw new RuntimeException("Dish not found in order");
-        }
-
-        dishOrderDAO.updateStatus(target.getDishOrderId(), status);
     }
 }

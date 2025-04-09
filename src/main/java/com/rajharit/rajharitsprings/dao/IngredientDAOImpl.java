@@ -1,7 +1,7 @@
 package com.rajharit.rajharitsprings.dao;
 
 import com.rajharit.rajharitsprings.entities.*;
-import com.rajharit.rajharitsprings.db.DataBaseSource;
+import com.rajharit.rajharitsprings.config.DataBaseSource;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -282,5 +282,86 @@ public class IngredientDAOImpl implements IngredientDAO {
         }
 
         return null;
+    }
+
+    public void savePrices(int ingredientId, List<PriceHistory> prices) {
+        String query = "INSERT INTO Price_History (ingredient_id, price, date) VALUES (?, ?, ?)";
+
+        try (Connection connection = dataBaseSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            connection.setAutoCommit(false);
+
+            for (PriceHistory price : prices) {
+                statement.setInt(1, ingredientId);
+                statement.setDouble(2, price.getPrice());
+                statement.setTimestamp(3, Timestamp.valueOf(price.getDate()));
+                statement.addBatch();
+            }
+
+            statement.executeBatch();
+            connection.commit();
+        } catch (SQLException e) {
+            try (Connection connection = dataBaseSource.getConnection();) {
+                connection.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException("Error during rollback", ex);
+            }
+            throw new RuntimeException("Error saving prices", e);
+        } finally {
+            try (Connection connection = dataBaseSource.getConnection();) {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new RuntimeException("Error resetting auto-commit", e);
+            }
+        }
+    }
+
+    public void saveStockMovements(int ingredientId, List<StockMovement> movements) {
+        String query = "INSERT INTO Stock_Movement (ingredient_id, movement_type, quantity, unit, movement_date) " +
+                "VALUES (?, ?::movement_type, ?, ?::unit_type, ?)";
+
+        try (Connection connection = dataBaseSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            connection.setAutoCommit(false);
+
+            for (StockMovement movement : movements) {
+                statement.setInt(1, ingredientId);
+                statement.setString(2, movement.getMovementType().name());
+                statement.setDouble(3, movement.getQuantity());
+                statement.setString(4, movement.getUnit().name());
+                statement.setTimestamp(5, Timestamp.valueOf(movement.getMovementDate()));
+                statement.addBatch();
+            }
+
+            statement.executeBatch();
+            connection.commit();
+        } catch (SQLException e) {
+            try (Connection connection = dataBaseSource.getConnection();){
+                connection.rollback();
+            } catch (SQLException ex) {
+                throw new RuntimeException("Error during rollback", ex);
+            }
+            throw new RuntimeException("Error saving stock movements", e);
+        } finally {
+            try (Connection connection = dataBaseSource.getConnection();) {
+                connection.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new RuntimeException("Error resetting auto-commit", e);
+            }
+        }
+    }
+
+    public void updateCurrentPrice(int ingredientId, double price, LocalDateTime date) {
+        String query = "UPDATE Ingredient SET unit_price = ?, update_datetime = ? WHERE ingredient_id = ?";
+
+        try (Connection connection = dataBaseSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setDouble(1, price);
+            statement.setTimestamp(2, Timestamp.valueOf(date));
+            statement.setInt(3, ingredientId);
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating current price", e);
+        }
     }
 }

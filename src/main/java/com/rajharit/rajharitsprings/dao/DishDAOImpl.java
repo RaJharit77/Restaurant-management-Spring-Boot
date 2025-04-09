@@ -2,7 +2,7 @@ package com.rajharit.rajharitsprings.dao;
 
 import com.rajharit.rajharitsprings.entities.Dish;
 import com.rajharit.rajharitsprings.entities.Ingredient;
-import com.rajharit.rajharitsprings.db.DataBaseSource;
+import com.rajharit.rajharitsprings.config.DataBaseSource;
 import com.rajharit.rajharitsprings.entities.Unit;
 import org.springframework.stereotype.Repository;
 

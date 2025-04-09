@@ -1,6 +1,6 @@
-package com.restaurant.dao;
+package com.rajharit.rajharitsprings.dao;
 
-import com.restaurant.entities.DishOrderStatus;
+import com.rajharit.rajharitsprings.entities.DishOrderStatus;
 
 import java.util.List;
 

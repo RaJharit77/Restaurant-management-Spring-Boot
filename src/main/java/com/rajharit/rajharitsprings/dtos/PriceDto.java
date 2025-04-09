@@ -1,13 +1,11 @@
 package com.rajharit.rajharitsprings.dtos;
 
-import lombok.Getter;
-import lombok.Setter;
-
+import lombok.Data;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-public class PriceDTO {
+@Data
+public class PriceDto {
     private double price;
     private LocalDateTime date;
 }
+

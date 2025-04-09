@@ -1,7 +1,12 @@
 package com.rajharit.rajharitsprings.mappers;
 
+import com.rajharit.rajharitsprings.dtos.OrderDishDto;
+import com.rajharit.rajharitsprings.dtos.OrderDto;
+import com.rajharit.rajharitsprings.entities.DishOrder;
+import com.rajharit.rajharitsprings.entities.Order;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component

@@ -1,7 +1,7 @@
 package com.rajharit.rajharitsprings.dao;
 
 import com.rajharit.rajharitsprings.entities.*;
-import com.rajharit.rajharitsprings.db.DataBaseSource;
+import com.rajharit.rajharitsprings.config.DataBaseSource;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -61,16 +61,35 @@ public class OrderDAOImpl implements OrderDAO {
     @Override
     public Order findByReference(String reference) {
         String query = "SELECT * FROM \"Order\" WHERE reference = ?";
+        String dishOrderQuery = "SELECT * FROM Dish_Order WHERE order_id = ?";
+
         try (Connection connection = dataBaseSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query)) {
+             PreparedStatement statement = connection.prepareStatement(query);
+             PreparedStatement dishOrderStatement = connection.prepareStatement(dishOrderQuery)) {
+
             statement.setString(1, reference);
             ResultSet resultSet = statement.executeQuery();
+
             if (resultSet.next()) {
                 Order order = new Order();
                 order.setOrderId(resultSet.getInt("order_id"));
                 order.setReference(resultSet.getString("reference"));
                 order.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
                 order.setStatus(StatusType.valueOf(resultSet.getString("status")));
+
+                dishOrderStatement.setInt(1, order.getOrderId());
+                ResultSet dishOrderResult = dishOrderStatement.executeQuery();
+
+                List<DishOrder> dishOrders = new ArrayList<>();
+                while (dishOrderResult.next()) {
+                    DishOrder dishOrder = new DishOrder();
+                    dishOrder.setDishOrderId(dishOrderResult.getInt("dish_order_id"));
+                    dishOrder.setQuantity(dishOrderResult.getInt("quantity"));
+                    dishOrder.setStatus(StatusType.valueOf(dishOrderResult.getString("status")));
+                    dishOrders.add(dishOrder);
+                }
+
+                order.setDishOrders(dishOrders);
                 return order;
             }
         } catch (SQLException e) {
@@ -113,6 +132,28 @@ public class OrderDAOImpl implements OrderDAO {
         } catch (SQLException e) {
             throw new RuntimeException("Error updating order status", e);
         }
+    }
+
+    @Override
+    public List<Order> findByCustomerId(int customerId) {
+        String query = "SELECT * FROM \"Order\" WHERE customer_id = ?";
+        List<Order> orders = new ArrayList<>();
+        try (Connection connection = dataBaseSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, customerId);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                Order order = new Order();
+                order.setOrderId(resultSet.getInt("order_id"));
+                order.setReference(resultSet.getString("reference"));
+                order.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
+                order.setStatus(StatusType.valueOf(resultSet.getString("status")));
+                orders.add(order);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving orders by customer id", e);
+        }
+        return orders;
     }
 
     @Override

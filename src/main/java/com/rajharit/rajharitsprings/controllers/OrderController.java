@@ -1,49 +1,59 @@
 package com.rajharit.rajharitsprings.controllers;
 
-import com.rajharit.rajharitsprings.entities.Order;
+import com.rajharit.rajharitsprings.dtos.OrderDto;
+import com.rajharit.rajharitsprings.dtos.OrderUpdateDto;
+import com.rajharit.rajharitsprings.entities.StatusType;
+import com.rajharit.rajharitsprings.exceptions.BusinessException;
+import com.rajharit.rajharitsprings.exceptions.ResourceNotFoundException;
 import com.rajharit.rajharitsprings.services.OrderService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/orders")
 public class OrderController {
-    @Autowired
-    private OrderService orderService;
+    private final OrderService orderService;
 
-    @GetMapping("/orders/{reference}")
-    public ResponseEntity<Order> getOrderByReference(@PathVariable String reference) {
-        Order order = orderService.getOrderDetails(reference);
-        if (order == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(order);
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
     }
 
-    @PutMapping("/orders/{reference}/dishes")
-    public ResponseEntity<Void> updateOrderDishes(
-            @PathVariable String reference,
-            @RequestBody UpdateOrderDishesInput input) {
+    @GetMapping("/{reference}")
+    public ResponseEntity<OrderDto> getOrderByReference(@PathVariable String reference) {
         try {
-            orderService.updateOrderDishes(reference, input.getDishes(), input.getStatus());
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
+            OrderDto order = orderService.getOrderByReference(reference);
+            return ResponseEntity.ok(order);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{reference}/dishes")
+    public ResponseEntity<OrderDto> updateOrderDishes(
+            @PathVariable String reference,
+            @RequestBody OrderUpdateDto orderUpdate) {
+        try {
+            OrderDto updatedOrder = orderService.updateOrderDishes(reference, orderUpdate);
+            return ResponseEntity.ok(updatedOrder);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        } catch (BusinessException e) {
             return ResponseEntity.badRequest().build();
         }
     }
 
-    @PutMapping("/orders/{reference}/dishes/{dishId}")
+    @PutMapping("/{reference}/dishes/{dishId}")
     public ResponseEntity<Void> updateDishStatus(
             @PathVariable String reference,
             @PathVariable int dishId,
-            @RequestBody UpdateDishStatusInput input) {
+            @RequestParam StatusType status) {
         try {
-            orderService.updateDishStatus(reference, dishId, input.getStatus());
+            orderService.updateDishStatus(reference, dishId, status);
             return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (EntityNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.notFound().build();
+        } catch (BusinessException e) {
+            return ResponseEntity.badRequest().build();
         }
     }
 }

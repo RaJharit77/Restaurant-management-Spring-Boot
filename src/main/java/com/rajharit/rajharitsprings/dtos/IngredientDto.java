@@ -1,11 +1,11 @@
-package com.rajharit.rajharitsprings.dto;
+package com.rajharit.rajharitsprings.dtos;
 
 import lombok.Data;
 
 import java.time.LocalDateTime;
 
 @Data
-public class IngredientDTO {
+public class IngredientDto {
     private int id;
     private String name;
     private double unitPrice;
