@@ -1,21 +1,19 @@
-package com.restaurant;
+package com.rajharit.rajharitsprings;
 
-import com.restaurant.db.DataBaseSource;
-import com.restaurant.dao.StockMovementImpl;
-import com.restaurant.dao.IngredientDAO;
-import com.restaurant.dao.IngredientDAOImpl;
-import com.restaurant.db.DatabaseCleaner;
-import com.restaurant.entities.StockMovement;
-import com.restaurant.entities.Ingredient;
-import com.restaurant.entities.MovementType;
-import com.restaurant.entities.Unit;
+import com.rajharit.rajharitsprings.config.DataBaseSource;
+import com.rajharit.rajharitsprings.dao.StockMovementImpl;
+import com.rajharit.rajharitsprings.dao.IngredientDAO;
+import com.rajharit.rajharitsprings.dao.IngredientDAOImpl;
+import com.rajharit.rajharitsprings.config.DatabaseCleaner;
+import com.rajharit.rajharitsprings.entities.StockMovement;
+import com.rajharit.rajharitsprings.entities.Ingredient;
+import com.rajharit.rajharitsprings.entities.MovementType;
+import com.rajharit.rajharitsprings.entities.Unit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
 import java.time.LocalDateTime;
 import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 public class StockMovementTest {

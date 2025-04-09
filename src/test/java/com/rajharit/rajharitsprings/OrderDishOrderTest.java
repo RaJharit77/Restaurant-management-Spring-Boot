@@ -1,9 +1,11 @@
-package com.restaurant;
+package com.rajharit.rajharitsprings;
 
-import com.restaurant.dao.*;
-import com.restaurant.db.DataBaseSource;
-import com.restaurant.db.DatabaseCleaner;
-import com.restaurant.entities.*;
+import com.rajharit.rajharitsprings.dao.*;
+import com.rajharit.rajharitsprings.config.DataBaseSource;
+import com.rajharit.rajharitsprings.config.DatabaseCleaner;
+import com.rajharit.rajharitsprings.entities.*;
+import com.rajharit.rajharitsprings.exceptions.InvalidStatusTransitionException;
+import com.rajharit.rajharitsprings.exceptions.InsufficientStockException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -175,5 +177,72 @@ public class OrderDishOrderTest {
         double expectedTotalAmount = (dish1.getUnitPrice() * dishOrder1.getQuantity()) + (dish2.getUnitPrice() * dishOrder2.getQuantity());
 
         assertEquals(expectedTotalAmount, order.getTotalAmount(), 0.001);
+    }
+
+    @Test
+    void testOrderConfirmationWithInsufficientStock() {
+        Dish dish = new Dish();
+        dish.setId(1);
+        dish.setName("Hot Dog");
+        dish.setUnitPrice(15000);
+
+        dish.setIngredients(List.of(
+                new Ingredient(1, "Saucisse", 20, Unit.G, LocalDateTime.now(), 100)
+        ));
+
+        Order order = new Order();
+        order.setReference("ORDER-STOCK-TEST");
+        order.setCreatedAt(LocalDateTime.now());
+
+        DishOrder dishOrder = new DishOrder();
+        dishOrder.setDish(dish);
+        dishOrder.setQuantity(2);
+
+        order.addDishOrder(dishOrder);
+
+        assertThrows(InsufficientStockException.class, order::confirmOrder);
+    }
+
+    @Test
+    void testConfirmOrder() {
+        Order order = new Order();
+        order.setReference("ORDER-CONFIRM-TEST");
+        order.setCreatedAt(LocalDateTime.now());
+
+        Ingredient ingredient = new Ingredient();
+        ingredient.setName("Ingrédient test");
+        ingredient.setUnitPrice(10);
+        ingredient.setUnit(Unit.U);
+        ingredient.setUpdateDateTime(LocalDateTime.now());
+        ingredient.setRequiredQuantity(1);
+
+        ingredient.getStockMovements().add(new StockMovement(
+                0, 0, MovementType.ENTRY, 10, Unit.U, LocalDateTime.now()
+        ));
+
+        Dish dish = new Dish();
+        dish.setName("Plat test");
+        dish.setUnitPrice(100);
+        dish.setIngredients(List.of(ingredient));
+
+        DishOrder dishOrder = new DishOrder();
+        dishOrder.setDish(dish);
+        dishOrder.setQuantity(1);
+        order.addDishOrder(dishOrder);
+
+        order.updateStatus(StatusType.CONFIRMED);
+
+        assertEquals(StatusType.CONFIRMED, order.getActualStatus());
+    }
+
+    @Test
+    void testInvalidStatusTransition() {
+        Order order = new Order();
+        order.setReference("ORDER-STATUS-TEST");
+        order.setCreatedAt(LocalDateTime.now());
+        order.setStatus(StatusType.CONFIRMED);
+
+        assertThrows(InvalidStatusTransitionException.class,
+                () -> order.updateStatus(StatusType.SERVED));
     }
 }

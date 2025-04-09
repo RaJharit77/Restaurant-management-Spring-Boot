@@ -1,14 +1,12 @@
-package com.restaurant;
+package com.rajharit.rajharitsprings;
 
-import com.restaurant.dao.*;
-import com.restaurant.db.DataBaseSource;
-import com.restaurant.entities.Dish;
-import com.restaurant.entities.Ingredient;
-import com.restaurant.entities.Unit;
-import com.restaurant.dao.StockMovementDAO;
-import com.restaurant.dao.StockMovementImpl;
-import com.restaurant.entities.StockMovement;
-import com.restaurant.entities.MovementType;
+import com.rajharit.rajharitsprings.config.DataBaseSource;
+import com.rajharit.rajharitsprings.dao.*;
+import com.rajharit.rajharitsprings.entities.Dish;
+import com.rajharit.rajharitsprings.entities.Unit;
+import com.rajharit.rajharitsprings.entities.MovementType;
+import com.rajharit.rajharitsprings.entities.StockMovement;
+import com.rajharit.rajharitsprings.entities.Ingredient;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

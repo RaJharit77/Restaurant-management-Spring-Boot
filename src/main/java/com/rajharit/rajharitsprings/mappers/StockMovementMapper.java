@@ -1,6 +1,9 @@
 package com.rajharit.rajharitsprings.mappers;
 
+import com.rajharit.rajharitsprings.dtos.StockMovementDto;
 import com.rajharit.rajharitsprings.entities.StockMovement;
+import com.rajharit.rajharitsprings.entities.MovementType;
+import com.rajharit.rajharitsprings.entities.Unit;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -9,18 +12,18 @@ public class StockMovementMapper {
         return new StockMovement(
                 0,
                 ingredientId,
-                dto.getMovementType(),
+                MovementType.valueOf(dto.getMovementType()),
                 dto.getQuantity(),
-                dto.getUnit(),
+                Unit.valueOf(dto.getUnit()),
                 dto.getMovementDate()
         );
     }
 
     public StockMovementDto toDto(StockMovement entity) {
         StockMovementDto dto = new StockMovementDto();
-        dto.setMovementType(entity.getMovementType());
+        dto.setMovementType(entity.getMovementType().name());
         dto.setQuantity(entity.getQuantity());
-        dto.setUnit(entity.getUnit());
+        dto.setUnit(entity.getUnit().name());
         dto.setMovementDate(entity.getMovementDate());
         return dto;
     }

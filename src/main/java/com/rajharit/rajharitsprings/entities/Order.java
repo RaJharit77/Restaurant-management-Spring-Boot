@@ -1,5 +1,7 @@
 package com.rajharit.rajharitsprings.entities;
 
+import com.rajharit.rajharitsprings.exceptions.InsufficientStockException;
+import com.rajharit.rajharitsprings.exceptions.InvalidStatusTransitionException;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ public class Order {
         if (statusHistory == null || statusHistory.isEmpty()) {
             return StatusType.CREATED;
         }
-        return statusHistory.get(statusHistory.size() - 1).getStatus();
+        return statusHistory.getLast().getStatus();
     }
 
     public void addDishOrder(DishOrder dishOrder) {
@@ -46,5 +48,69 @@ public class Order {
         return dishOrders.stream()
                 .mapToDouble(dishOrder -> dishOrder.getDish().getUnitPrice() * dishOrder.getQuantity())
                 .sum();
+    }
+
+    public void confirmOrder() {
+        if (this.status != StatusType.CREATED) {
+            throw new InvalidStatusTransitionException(
+                    "Cannot confirm order from current status: " + this.status);
+        }
+
+        checkStockAvailability();
+
+        this.status = StatusType.CONFIRMED;
+        this.statusHistory.add(new OrderStatus(0, StatusType.CONFIRMED, LocalDateTime.now()));
+    }
+
+    private void checkStockAvailability() {
+        List<String> missingIngredients = new ArrayList<>();
+
+        for (DishOrder dishOrder : dishOrders) {
+            Dish dish = dishOrder.getDish();
+            double availableQuantity = dish.getAvailableQuantity(LocalDateTime.now());
+
+            if (availableQuantity < dishOrder.getQuantity()) {
+                missingIngredients.add(String.format(
+                        "%s (besoin: %d, disponible: %.2f)",
+                        dish.getName(), dishOrder.getQuantity(), availableQuantity));
+            }
+        }
+
+        if (!missingIngredients.isEmpty()) {
+            throw new InsufficientStockException(
+                    "Stock insuffisant pour: " + String.join(", ", missingIngredients));
+        }
+    }
+
+    private boolean isValidTransition(StatusType current, StatusType newStatus) {
+        switch (current) {
+            case CREATED:
+                return newStatus == StatusType.CONFIRMED;
+            case CONFIRMED:
+                return newStatus == StatusType.IN_PREPARATION;
+            case IN_PREPARATION:
+                return newStatus == StatusType.COMPLETED;
+            case COMPLETED:
+                return newStatus == StatusType.SERVED;
+            default:
+                return false;
+        }
+    }
+
+    public void updateStatus(StatusType newStatus) {
+        if (!isValidTransition(this.status, newStatus)) {
+            throw new InvalidStatusTransitionException(
+                    "Transition invalide de " + this.status + " à " + newStatus);
+        }
+
+        if (newStatus == StatusType.CONFIRMED) {
+            checkStockAvailability();
+        }
+
+        this.status = newStatus;
+        if (statusHistory == null) {
+            statusHistory = new ArrayList<>();
+        }
+        statusHistory.add(new OrderStatus(0, newStatus, LocalDateTime.now()));
     }
 }

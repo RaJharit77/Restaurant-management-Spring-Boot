@@ -1,10 +1,13 @@
-package com.restaurant;
+package com.rajharit.rajharitsprings;
 
-import com.restaurant.dao.*;
-import com.restaurant.db.DataBaseSource;
-import com.restaurant.entities.Dish;
-import com.restaurant.entities.Ingredient;
-import com.restaurant.entities.Unit;
+import com.rajharit.rajharitsprings.config.DataBaseSource;
+import com.rajharit.rajharitsprings.dao.DishDAO;
+import com.rajharit.rajharitsprings.dao.DishDAOImpl;
+import com.rajharit.rajharitsprings.dao.IngredientDAO;
+import com.rajharit.rajharitsprings.dao.IngredientDAOImpl;
+import com.rajharit.rajharitsprings.entities.Dish;
+import com.rajharit.rajharitsprings.entities.Ingredient;
+import com.rajharit.rajharitsprings.entities.Unit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
