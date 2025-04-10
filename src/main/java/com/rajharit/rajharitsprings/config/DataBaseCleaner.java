@@ -6,7 +6,7 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
 
-public class DatabaseCleaner {
+public class DataBaseCleaner {
     private static final List<String> TABLES_TO_CLEAN = Arrays.asList(
             "Dish_Order_Status",
             "Order_Status",
@@ -21,7 +21,7 @@ public class DatabaseCleaner {
 
     private final DataBaseSource dataBaseSource;
 
-    public DatabaseCleaner(DataBaseSource dataBaseSource) {
+    public DataBaseCleaner(DataBaseSource dataBaseSource) {
         this.dataBaseSource = dataBaseSource;
     }
 

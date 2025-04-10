@@ -119,7 +119,7 @@ public class IngredientDAOImpl implements IngredientDAO {
         return ingredients;
     }
 
-    private List<PriceHistory> getPriceHistoryForIngredient(int ingredientId) {
+    public List<PriceHistory> getPriceHistoryForIngredient(int ingredientId) {
         String query = "SELECT price, date FROM Price_History WHERE ingredient_id = ? ORDER BY date DESC";
         List<PriceHistory> priceHistory = new ArrayList<>();
 
@@ -139,6 +139,34 @@ public class IngredientDAOImpl implements IngredientDAO {
         }
 
         return priceHistory;
+    }
+
+    @Override
+    public List<StockMovement> getStockMovementsByIngredientId(int ingredientId) {
+        String query = "SELECT * FROM Stock_Movement WHERE ingredient_id = ? ORDER BY movement_date";
+        List<StockMovement> movements = new ArrayList<>();
+
+        try (Connection connection = dataBaseSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, ingredientId);
+            ResultSet resultSet = statement.executeQuery();
+
+            while (resultSet.next()) {
+                StockMovement movement = new StockMovement(
+                        resultSet.getInt("movement_id"),
+                        resultSet.getInt("ingredient_id"),
+                        MovementType.valueOf(resultSet.getString("movement_type")),
+                        resultSet.getDouble("quantity"),
+                        Unit.valueOf(resultSet.getString("unit")),
+                        resultSet.getTimestamp("movement_date").toLocalDateTime()
+                );
+                movements.add(movement);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving stock movements", e);
+        }
+
+        return movements;
     }
 
     @Override
@@ -284,38 +312,31 @@ public class IngredientDAOImpl implements IngredientDAO {
         return null;
     }
 
+    @Override
     public void savePrices(int ingredientId, List<PriceHistory> prices) {
         String query = "INSERT INTO Price_History (ingredient_id, price, date) VALUES (?, ?, ?)";
 
-        try (Connection connection = dataBaseSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query)) {
+        try (Connection connection = dataBaseSource.getConnection()) {
             connection.setAutoCommit(false);
-
-            for (PriceHistory price : prices) {
-                statement.setInt(1, ingredientId);
-                statement.setDouble(2, price.getPrice());
-                statement.setTimestamp(3, Timestamp.valueOf(price.getDate()));
-                statement.addBatch();
-            }
-
-            statement.executeBatch();
-            connection.commit();
-        } catch (SQLException e) {
-            try (Connection connection = dataBaseSource.getConnection();) {
-                connection.rollback();
-            } catch (SQLException ex) {
-                throw new RuntimeException("Error during rollback", ex);
-            }
-            throw new RuntimeException("Error saving prices", e);
-        } finally {
-            try (Connection connection = dataBaseSource.getConnection();) {
-                connection.setAutoCommit(true);
+            try (PreparedStatement statement = connection.prepareStatement(query)) {
+                for (PriceHistory price : prices) {
+                    statement.setInt(1, ingredientId);
+                    statement.setDouble(2, price.getPrice());
+                    statement.setTimestamp(3, Timestamp.valueOf(price.getDate()));
+                    statement.addBatch();
+                }
+                statement.executeBatch();
+                connection.commit();
             } catch (SQLException e) {
-                throw new RuntimeException("Error resetting auto-commit", e);
+                connection.rollback();
+                throw new RuntimeException("Error saving prices", e);
             }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error managing database connection", e);
         }
     }
 
+    @Override
     public void saveStockMovements(int ingredientId, List<StockMovement> movements) {
         String query = "INSERT INTO Stock_Movement (ingredient_id, movement_type, quantity, unit, movement_date) " +
                 "VALUES (?, ?::movement_type, ?, ?::unit_type, ?)";
@@ -351,6 +372,7 @@ public class IngredientDAOImpl implements IngredientDAO {
         }
     }
 
+    @Override
     public void updateCurrentPrice(int ingredientId, double price, LocalDateTime date) {
         String query = "UPDATE Ingredient SET unit_price = ?, update_datetime = ? WHERE ingredient_id = ?";
 

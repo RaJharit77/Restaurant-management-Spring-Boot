@@ -7,6 +7,8 @@ import com.rajharit.rajharitsprings.entities.*;
 import com.rajharit.rajharitsprings.exceptions.ResourceNotFoundException;
 import com.rajharit.rajharitsprings.mappers.IngredientMapper;
 import com.rajharit.rajharitsprings.dao.IngredientDAOImpl;
+import com.rajharit.rajharitsprings.mappers.PriceMapper;
+import com.rajharit.rajharitsprings.mappers.StockMovementMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -17,10 +19,17 @@ import java.util.stream.Collectors;
 public class IngredientService {
     private final IngredientDAOImpl ingredientRepository;
     private final IngredientMapper ingredientMapper;
+    private final PriceMapper priceMapper;
+    private final StockMovementMapper stockMovementMapper;
 
-    public IngredientService(IngredientDAOImpl ingredientRepository, IngredientMapper ingredientMapper) {
+    public IngredientService(IngredientDAOImpl ingredientRepository,
+                             IngredientMapper ingredientMapper,
+                             PriceMapper priceMapper,
+                             StockMovementMapper stockMovementMapper) {
         this.ingredientRepository = ingredientRepository;
         this.ingredientMapper = ingredientMapper;
+        this.priceMapper = priceMapper;
+        this.stockMovementMapper = stockMovementMapper;
     }
 
     public List<IngredientDto> getAllIngredients(Double maxPrice) {
@@ -39,7 +48,28 @@ public class IngredientService {
 
     public IngredientDto getIngredientById(int id) {
         Ingredient ingredient = ingredientRepository.findById(id);
+        if (ingredient == null) {
+            throw new ResourceNotFoundException("Ingredient not found with id: " + id);
+        }
+
+        ingredient.setPriceHistory(ingredientRepository.getPriceHistoryForIngredient(id));
+        ingredient.setStockMovements(ingredientRepository.getStockMovementsByIngredientId(id));
+
         return ingredientMapper.toDto(ingredient);
+    }
+
+    public List<PriceDto> getIngredientPrices(int ingredientId) {
+        List<PriceHistory> prices = ingredientRepository.getPriceHistoryForIngredient(ingredientId);
+        return prices.stream()
+                .map(priceMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<StockMovementDto> getIngredientStockMovements(int ingredientId) {
+        List<StockMovement> movements = ingredientRepository.getStockMovementsByIngredientId(ingredientId);
+        return movements.stream()
+                .map(stockMovementMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     public List<IngredientDto> saveIngredients(List<IngredientDto> ingredientDtos) {

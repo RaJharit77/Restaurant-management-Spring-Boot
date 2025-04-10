@@ -59,4 +59,16 @@ public class IngredientController {
         ingredientService.updateStockMovements(ingredientId, stockMovementDtos);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{id}/prices")
+    public ResponseEntity<List<PriceDto>> getIngredientPrices(@PathVariable int id) {
+        List<PriceDto> prices = ingredientService.getIngredientPrices(id);
+        return ResponseEntity.ok(prices);
+    }
+
+    @GetMapping("/{id}/stockMovements")
+    public ResponseEntity<List<StockMovementDto>> getIngredientStockMovements(@PathVariable int id) {
+        List<StockMovementDto> movements = ingredientService.getIngredientStockMovements(id);
+        return ResponseEntity.ok(movements);
+    }
 }

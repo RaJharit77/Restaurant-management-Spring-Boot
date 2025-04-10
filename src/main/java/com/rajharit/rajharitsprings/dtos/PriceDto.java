@@ -8,4 +8,3 @@ public class PriceDto {
     private double price;
     private LocalDateTime date;
 }
-

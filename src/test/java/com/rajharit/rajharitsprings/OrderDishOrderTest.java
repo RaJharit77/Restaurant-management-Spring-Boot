@@ -2,7 +2,7 @@ package com.rajharit.rajharitsprings;
 
 import com.rajharit.rajharitsprings.dao.*;
 import com.rajharit.rajharitsprings.config.DataBaseSource;
-import com.rajharit.rajharitsprings.config.DatabaseCleaner;
+import com.rajharit.rajharitsprings.config.DataBaseCleaner;
 import com.rajharit.rajharitsprings.entities.*;
 import com.rajharit.rajharitsprings.exceptions.InvalidStatusTransitionException;
 import com.rajharit.rajharitsprings.exceptions.InsufficientStockException;
@@ -19,7 +19,7 @@ public class OrderDishOrderTest {
     private OrderStatusDAO orderStatusDAO;
     private DishOrderDAO dishOrderDAO;
     private DataBaseSource dataBaseSource;
-    private DatabaseCleaner databaseCleaner;
+    private DataBaseCleaner databaseCleaner;
 
     @BeforeEach
     void setUp() {
@@ -27,7 +27,7 @@ public class OrderDishOrderTest {
         orderDAO = new OrderDAOImpl(dataBaseSource);
         dishOrderDAO = new DishOrderDAOImpl(dataBaseSource);
         orderStatusDAO = new OrderStatusDAOImpl(dataBaseSource);
-        databaseCleaner = new DatabaseCleaner(dataBaseSource);
+        databaseCleaner = new DataBaseCleaner(dataBaseSource);
 
         databaseCleaner.cleanSpecificTables("Dish_Order", "\"Order\"", "Order_Status");
     }

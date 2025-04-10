@@ -10,23 +10,24 @@ import java.sql.SQLException;
 @Configuration
 public class DataBaseSource {
     private final static int defaultPort = 5432;
-    private final String host = System.getenv("DB_HOST");
-    private final String user = System.getenv("DB_USER");
-    private final String password = System.getenv("DB_PASSWORD");
-    private final String database = System.getenv("DB_NAME");
-    private final String jdbcUrl;
+    private final String host;
+    private final String user;
+    private final String password;
+    private final String database;
 
     public DataBaseSource() {
-        jdbcUrl = "jdbc:postgresql://" + host + ":" + defaultPort + "/" + database;
-    }
+        this.host = System.getenv("DB_HOST");
+        this.user = System.getenv("DB_USER");
+        this.password = System.getenv("DB_PASSWORD");
+        this.database = System.getenv("DB_NAME");
 
-    @Bean
-    public Connection getConnection() {
-        try {
-            return DriverManager.getConnection(jdbcUrl, user, password);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        if (host == null || user == null || password == null || database == null) {
+            throw new IllegalStateException("Database configuration is missing");
         }
     }
-}
 
+    public Connection getConnection() throws SQLException {
+        String jdbcUrl = "jdbc:postgresql://" + host + ":" + defaultPort + "/" + database;
+        return DriverManager.getConnection(jdbcUrl, user, password);
+    }
+}

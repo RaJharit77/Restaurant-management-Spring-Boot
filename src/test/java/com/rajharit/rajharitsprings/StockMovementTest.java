@@ -4,7 +4,7 @@ import com.rajharit.rajharitsprings.config.DataBaseSource;
 import com.rajharit.rajharitsprings.dao.StockMovementImpl;
 import com.rajharit.rajharitsprings.dao.IngredientDAO;
 import com.rajharit.rajharitsprings.dao.IngredientDAOImpl;
-import com.rajharit.rajharitsprings.config.DatabaseCleaner;
+import com.rajharit.rajharitsprings.config.DataBaseCleaner;
 import com.rajharit.rajharitsprings.entities.StockMovement;
 import com.rajharit.rajharitsprings.entities.Ingredient;
 import com.rajharit.rajharitsprings.entities.MovementType;
@@ -20,14 +20,14 @@ public class StockMovementTest {
     private StockMovementImpl stockMovementImpl;
     private IngredientDAO ingredientDAO;
     private DataBaseSource dataBaseSource;
-    private DatabaseCleaner databaseCleaner;
+    private DataBaseCleaner databaseCleaner;
 
     @BeforeEach
     void setUp() {
         dataBaseSource = new DataBaseSource();
         stockMovementImpl = new StockMovementImpl(dataBaseSource);
         ingredientDAO = new IngredientDAOImpl(dataBaseSource);
-        databaseCleaner = new DatabaseCleaner(dataBaseSource);
+        databaseCleaner = new DataBaseCleaner(dataBaseSource);
 
         databaseCleaner.cleanSpecificTables("Stock_Movement", "Ingredient");
     }
