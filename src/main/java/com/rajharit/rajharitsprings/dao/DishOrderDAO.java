@@ -9,5 +9,8 @@ public interface DishOrderDAO {
     DishOrder findById(int id);
     List<DishOrder> findByOrderId(int orderId);
     DishOrder save(DishOrder dishOrder);
+
+    List<DishOrder> findByDishId(int dishId);
+
     void updateStatus(int dishOrderId, StatusType status);
 }

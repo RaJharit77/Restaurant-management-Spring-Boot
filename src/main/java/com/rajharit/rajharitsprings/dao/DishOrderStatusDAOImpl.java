@@ -3,10 +3,13 @@ package com.rajharit.rajharitsprings.dao;
 import com.rajharit.rajharitsprings.entities.DishOrderStatus;
 import com.rajharit.rajharitsprings.entities.StatusType;
 import com.rajharit.rajharitsprings.config.DataBaseSource;
+import org.springframework.stereotype.Repository;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@Repository
 public class DishOrderStatusDAOImpl implements DishOrderStatusDAO {
     private final DataBaseSource dataSource;
 

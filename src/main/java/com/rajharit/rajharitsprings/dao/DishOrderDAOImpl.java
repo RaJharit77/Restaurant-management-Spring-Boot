@@ -69,6 +69,23 @@ public class DishOrderDAOImpl implements DishOrderDAO {
     }
 
     @Override
+    public List<DishOrder> findByDishId(int dishId) {
+        String query = "SELECT * FROM Dish_Order WHERE dish_id = ?";
+        List<DishOrder> dishOrders = new ArrayList<>();
+        try (Connection connection = dataBaseSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, dishId);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                dishOrders.add(mapDishOrder(resultSet));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error retrieving dish orders by dish id", e);
+        }
+        return dishOrders;
+    }
+
+    @Override
     public void updateStatus(int dishOrderId, StatusType status) {
         String query = "UPDATE Dish_Order SET status = ?::dish_status WHERE dish_order_id = ?";
         try (Connection connection = dataBaseSource.getConnection();
