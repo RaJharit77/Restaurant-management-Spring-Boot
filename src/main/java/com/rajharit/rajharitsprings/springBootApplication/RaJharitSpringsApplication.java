@@ -12,5 +12,4 @@ public class RaJharitSpringsApplication {
     public static void main(String[] args) {
         SpringApplication.run(RaJharitSpringsApplication.class, args);
     }
-
 }
