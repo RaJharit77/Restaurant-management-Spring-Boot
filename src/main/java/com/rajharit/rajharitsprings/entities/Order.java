@@ -32,22 +32,26 @@ public class Order {
         this.dishOrders = dishOrders;
     }
 
-    public StatusType getActualStatus() {
-        if (statusHistory == null || statusHistory.isEmpty()) {
-            return StatusType.CREATED;
-        }
-        return statusHistory.getLast().getStatus();
-    }
-
     public void addDishOrder(DishOrder dishOrder) {
         dishOrder.setOrder(this);
         this.dishOrders.add(dishOrder);
     }
 
     public double getTotalAmount() {
+        if (dishOrders == null || dishOrders.isEmpty()) {
+            return 0.0;
+        }
+
         return dishOrders.stream()
                 .mapToDouble(dishOrder -> dishOrder.getDish().getUnitPrice() * dishOrder.getQuantity())
                 .sum();
+    }
+
+    public StatusType getActualStatus() {
+        if (statusHistory == null || statusHistory.isEmpty()) {
+            return StatusType.CREATED;
+        }
+        return statusHistory.getLast().getStatus();
     }
 
     public void confirmOrder() {
@@ -83,18 +87,13 @@ public class Order {
     }
 
     private boolean isValidTransition(StatusType current, StatusType newStatus) {
-        switch (current) {
-            case CREATED:
-                return newStatus == StatusType.CONFIRMED;
-            case CONFIRMED:
-                return newStatus == StatusType.IN_PROGRESS;
-            case IN_PROGRESS:N:
-                return newStatus == StatusType.FINISHED;
-            case FINISHED:
-                return newStatus == StatusType.DELIVERED;
-            default:
-                return false;
-        }
+        return switch (current) {
+            case CREATED -> newStatus == StatusType.CONFIRMED;
+            case CONFIRMED -> newStatus == StatusType.IN_PROGRESS;
+            case IN_PROGRESS -> newStatus == StatusType.FINISHED;
+            case FINISHED -> newStatus == StatusType.DELIVERED;
+            default -> false;
+        };
     }
 
     public void updateStatus(StatusType newStatus) {

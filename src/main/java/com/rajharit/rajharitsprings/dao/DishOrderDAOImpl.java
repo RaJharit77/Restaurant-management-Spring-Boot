@@ -54,16 +54,22 @@ public class DishOrderDAOImpl implements DishOrderDAO {
         String query = "INSERT INTO Dish_Order (order_id, dish_id, quantity, status) VALUES (?, ?, ?, ?::status_type) RETURNING dish_order_id";
         try (Connection connection = dataBaseSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
+
+            if (dishOrder.getOrder() == null || dishOrder.getDish() == null) {
+                throw new RuntimeException("Order or Dish is null");
+            }
+
             statement.setInt(1, dishOrder.getOrder().getOrderId());
             statement.setInt(2, dishOrder.getDish().getId());
             statement.setInt(3, dishOrder.getQuantity());
             statement.setString(4, dishOrder.getStatus().name());
+
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 dishOrder.setDishOrderId(resultSet.getInt("dish_order_id"));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error saving dish order", e);
+            throw new RuntimeException("Error saving dish order: " + e.getMessage(), e);
         }
         return dishOrder;
     }
@@ -101,7 +107,13 @@ public class DishOrderDAOImpl implements DishOrderDAO {
     private DishOrder mapDishOrder(ResultSet resultSet) throws SQLException {
         DishOrder dishOrder = new DishOrder();
         dishOrder.setDishOrderId(resultSet.getInt("dish_order_id"));
-        dishOrder.setDish(new Dish(resultSet.getInt("dish_id"), null, 0, null));
+
+        Dish dish = new Dish();
+        dish.setId(resultSet.getInt("dish_id"));
+        dish.setName(resultSet.getString("name"));
+        dish.setUnitPrice(resultSet.getDouble("unit_price"));
+
+        dishOrder.setDish(dish);
         dishOrder.setQuantity(resultSet.getInt("quantity"));
         dishOrder.setStatus(StatusType.valueOf(resultSet.getString("status")));
         return dishOrder;

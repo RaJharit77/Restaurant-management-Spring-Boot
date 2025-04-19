@@ -17,4 +17,7 @@ public class DishOrderStatus {
         this.status = status;
         this.changedAt = changedAt;
     }
+
+    public DishOrderStatus() {
+    }
 }

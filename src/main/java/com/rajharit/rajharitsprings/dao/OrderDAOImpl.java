@@ -2,6 +2,8 @@ package com.rajharit.rajharitsprings.dao;
 
 import com.rajharit.rajharitsprings.entities.*;
 import com.rajharit.rajharitsprings.config.DataBaseSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -11,6 +13,7 @@ import java.util.List;
 @Repository
 public class OrderDAOImpl implements OrderDAO {
     private final DataBaseSource dataBaseSource;
+    private static final Logger logger = LoggerFactory.getLogger(OrderDAOImpl.class);
 
     public OrderDAOImpl(DataBaseSource dataBaseSource) {
         this.dataBaseSource = dataBaseSource;
@@ -60,65 +63,88 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public Order findByReference(String reference) {
-        String query = "SELECT * FROM \"Order\" WHERE reference = ?";
-        String dishOrderQuery = "SELECT * FROM Dish_Order WHERE order_id = ?";
+        try {
+            String orderQuery = "SELECT * FROM \"Order\" WHERE reference = ?";
+            try (Connection connection = dataBaseSource.getConnection();
+                 PreparedStatement statement = connection.prepareStatement(orderQuery)) {
 
-        try (Connection connection = dataBaseSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query);
-             PreparedStatement dishOrderStatement = connection.prepareStatement(dishOrderQuery)) {
+                statement.setString(1, reference);
+                ResultSet rs = statement.executeQuery();
 
-            statement.setString(1, reference);
-            ResultSet resultSet = statement.executeQuery();
-
-            if (resultSet.next()) {
-                Order order = new Order();
-                order.setOrderId(resultSet.getInt("order_id"));
-                order.setReference(resultSet.getString("reference"));
-                order.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
-                order.setActualStatus(StatusType.valueOf(resultSet.getString("status")));
-
-                dishOrderStatement.setInt(1, order.getOrderId());
-                ResultSet dishOrderResult = dishOrderStatement.executeQuery();
-
-                List<DishOrder> dishOrders = new ArrayList<>();
-                while (dishOrderResult.next()) {
-                    DishOrder dishOrder = new DishOrder();
-                    dishOrder.setDishOrderId(dishOrderResult.getInt("dish_order_id"));
-                    dishOrder.setQuantity(dishOrderResult.getInt("quantity"));
-                    dishOrder.setStatus(StatusType.valueOf(dishOrderResult.getString("status")));
-                    dishOrders.add(dishOrder);
+                if (rs.next()) {
+                    Order order = new Order();
+                    order.setOrderId(rs.getInt("order_id"));
+                    order.setReference(rs.getString("reference"));
+                    order.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                    order.setActualStatus(StatusType.valueOf(rs.getString("status")));
+                    return order;
                 }
-
-                order.setDishOrders(dishOrders);
-                return order;
             }
+            return null;
         } catch (SQLException e) {
-            throw new RuntimeException("Error retrieving order by reference", e);
+            logger.error("Error finding order by reference: " + reference, e);
+            throw new RuntimeException("Database error finding order", e);
         }
-        return null;
     }
 
     @Override
     public Order save(Order order) {
-        Order existingOrder = findByReference(order.getReference());
-        if (existingOrder != null) {
-            throw new RuntimeException("La référence de commande existe déjà : " + order.getReference());
-        }
+        String query = "INSERT INTO \"Order\" (reference, created_at) VALUES (?, ?) RETURNING order_id";
 
-        String query = "INSERT INTO \"Order\" (reference, created_at, status) VALUES (?, ?, ?::status_type) RETURNING order_id";
         try (Connection connection = dataBaseSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
+
             statement.setString(1, order.getReference());
             statement.setTimestamp(2, Timestamp.valueOf(order.getCreatedAt()));
-            statement.setString(3, order.getActualStatus().name());
-            ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()) {
-                order.setOrderId(resultSet.getInt("order_id"));
+
+            ResultSet rs = statement.executeQuery();
+            if (rs.next()) {
+                order.setOrderId(rs.getInt("order_id"));
+
+                this.updateStatus(order.getOrderId(), order.getActualStatus());
+
+                return order;
             }
+            throw new RuntimeException("Échec de l'insertion");
         } catch (SQLException e) {
-            throw new RuntimeException("Error saving order", e);
+            throw new RuntimeException("Erreur base de données : " + e.getMessage(), e);
         }
-        return order;
+    }
+
+    private void loadOrderStatusHistory(Connection connection, Order order) throws SQLException {
+        String query = "SELECT * FROM Order_Status WHERE order_id = ? ORDER BY changed_at";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, order.getOrderId());
+            ResultSet rs = statement.executeQuery();
+
+            List<OrderStatus> statusHistory = new ArrayList<>();
+            while (rs.next()) {
+                statusHistory.add(new OrderStatus(
+                        rs.getInt("order_status_id"),
+                        StatusType.valueOf(rs.getString("status")),
+                        rs.getTimestamp("changed_at").toLocalDateTime()
+                ));
+            }
+            order.setStatusHistory(statusHistory);
+        }
+    }
+
+    private void loadDishOrderStatusHistory(Connection connection, DishOrder dishOrder) throws SQLException {
+        String query = "SELECT * FROM Dish_Order_Status WHERE dish_order_id = ? ORDER BY changed_at";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, dishOrder.getDishOrderId());
+            ResultSet rs = statement.executeQuery();
+
+            List<DishOrderStatus> statusHistory = new ArrayList<>();
+            while (rs.next()) {
+                statusHistory.add(new DishOrderStatus(
+                        rs.getInt("dish_order_status_id"),
+                        StatusType.valueOf(rs.getString("status")),
+                        rs.getTimestamp("changed_at").toLocalDateTime()
+                ));
+            }
+            dishOrder.setStatusHistory(statusHistory);
+        }
     }
 
     @Override

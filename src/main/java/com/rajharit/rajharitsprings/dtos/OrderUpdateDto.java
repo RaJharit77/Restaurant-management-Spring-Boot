@@ -7,6 +7,6 @@ import java.util.List;
 
 @Data
 public class OrderUpdateDto {
-    private StatusType status;
+    private StatusType orderStatus;
     private List<OrderDishUpdateDto> dishes;
 }

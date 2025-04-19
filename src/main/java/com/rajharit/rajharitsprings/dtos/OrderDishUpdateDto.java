@@ -4,6 +4,6 @@ import lombok.Data;
 
 @Data
 public class OrderDishUpdateDto {
-    private int dishId;
+    private int dishIdentifier;
     private int quantity;
 }

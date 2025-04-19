@@ -17,4 +17,7 @@ public class OrderStatus {
         this.status = status;
         this.changedAt = changedAt;
     }
+
+    public OrderStatus() {
+    }
 }

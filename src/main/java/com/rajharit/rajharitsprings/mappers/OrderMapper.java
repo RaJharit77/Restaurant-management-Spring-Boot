@@ -4,7 +4,6 @@ import com.rajharit.rajharitsprings.dtos.DishOrderDto;
 import com.rajharit.rajharitsprings.dtos.OrderDto;
 import com.rajharit.rajharitsprings.entities.DishOrder;
 import com.rajharit.rajharitsprings.entities.Order;
-import com.rajharit.rajharitsprings.entities.StatusType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,8 +16,8 @@ public class OrderMapper {
         dto.setOrderId(order.getOrderId());
         dto.setReference(order.getReference());
         dto.setCreatedAt(order.getCreatedAt());
-        dto.setActualStatus(StatusType.valueOf(String.valueOf(order.getActualStatus())));
-        dto.setTotalAmount(calculateTotalAmount(order));
+        dto.setActualStatus(order.getActualStatus());
+        dto.setTotalAmount(order.getTotalAmount());
 
         if (order.getDishOrders() != null) {
             List<DishOrderDto> dishDtos = order.getDishOrders().stream()
@@ -34,7 +33,7 @@ public class OrderMapper {
         DishOrderDto dto = new DishOrderDto();
         dto.setDishId(dishOrder.getDish().getId());
         dto.setDishName(dishOrder.getDish().getName());
-        dto.setQuantityOrdered(dishOrder.getQuantity());
+        dto.setQuantity(dishOrder.getQuantity());
         dto.setActualOrderStatus(dishOrder.getStatus());
         return dto;
     }
