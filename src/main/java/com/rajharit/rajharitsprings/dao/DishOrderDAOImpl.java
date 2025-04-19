@@ -39,7 +39,8 @@ public class DishOrderDAOImpl implements DishOrderDAO {
 
     @Override
     public List<DishOrder> findByOrderId(int orderId) {
-        String query = "SELECT * FROM Dish_Order WHERE order_id = ?";
+        String query = "SELECT dish_order_id, order_id, dish_id, quantity, status " +
+                "FROM dish_order WHERE order_id = ?";
 
         List<DishOrder> dishOrders = new ArrayList<>();
         try (Connection connection = dataBaseSource.getConnection();
@@ -52,18 +53,18 @@ public class DishOrderDAOImpl implements DishOrderDAO {
                 DishOrder dishOrder = new DishOrder();
                 dishOrder.setDishOrderId(rs.getInt("dish_order_id"));
                 dishOrder.setQuantity(rs.getInt("quantity"));
+                dishOrder.setStatus(StatusType.valueOf(rs.getString("status")));
 
                 Dish dish = new Dish();
                 dish.setId(rs.getInt("dish_id"));
-
                 dishOrder.setDish(dish);
 
                 dishOrders.add(dishOrder);
             }
             return dishOrders;
         } catch (SQLException e) {
-            logger.error("Error retrieving dish orders by order id", e);
-            throw new RuntimeException("Error retrieving dish orders by order id", e);
+            logger.error("Error finding dish orders by order id: " + orderId, e);
+            throw new RuntimeException("Error finding dish orders by order id", e);
         }
     }
 
