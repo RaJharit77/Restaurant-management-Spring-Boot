@@ -1,4 +1,4 @@
-CREATE TABLE Dish_Order IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS Dish_Order
 (
     dish_order_id SERIAL PRIMARY KEY,
     order_id      INT REFERENCES "Order" (order_id) ON DELETE CASCADE,

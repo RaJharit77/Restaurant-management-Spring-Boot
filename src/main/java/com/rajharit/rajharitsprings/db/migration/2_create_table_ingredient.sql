@@ -1,4 +1,4 @@
-CREATE TABLE Ingredient IF NOT EXISTS
+CREATE TABLE IF NOT EXISTS Ingredient
 (
     ingredient_id   SERIAL PRIMARY KEY,
     name            VARCHAR(255)     NOT NULL,

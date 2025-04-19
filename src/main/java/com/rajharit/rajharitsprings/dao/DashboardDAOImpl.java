@@ -49,14 +49,12 @@ public class DashboardDAOImpl implements DashboardDAO {
     }
 
     @Override
-    public List<BestSales> getBestSalesData(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<BestSales> getBestSalesData() {
         String query = "SELECT * FROM Best_Sales WHERE start_date = ? AND end_date = ? ORDER BY quantity_sold DESC";
         List<BestSales> bestSales = new ArrayList<>();
 
         try (Connection connection = dataBaseSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setTimestamp(1, Timestamp.valueOf(startDate));
-            statement.setTimestamp(2, Timestamp.valueOf(endDate));
 
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {
@@ -65,8 +63,6 @@ public class DashboardDAOImpl implements DashboardDAO {
                 data.setDishName(resultSet.getString("dish_name"));
                 data.setQuantitySold(resultSet.getInt("quantity_sold"));
                 data.setTotalAmount(resultSet.getDouble("total_amount"));
-                data.setStartDate(resultSet.getTimestamp("start_date").toLocalDateTime());
-                data.setEndDate(resultSet.getTimestamp("end_date").toLocalDateTime());
                 data.setCalculationDate(resultSet.getTimestamp("calculation_date").toLocalDateTime());
                 bestSales.add(data);
             }
@@ -133,15 +129,12 @@ public class DashboardDAOImpl implements DashboardDAO {
     }
 
     @Override
-    public List<BestSales> getBestSalesDataFromDB(LocalDateTime startDate, LocalDateTime endDate, int limit) {
+    public List<BestSales> getBestSalesDataFromDB() {
         String query = "SELECT * FROM get_best_sales(?, ?, ?)";
         List<BestSales> bestSales = new ArrayList<>();
 
         try (Connection connection = dataBaseSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setTimestamp(1, Timestamp.valueOf(startDate));
-            statement.setTimestamp(2, Timestamp.valueOf(endDate));
-            statement.setInt(3, limit);
 
             ResultSet resultSet = statement.executeQuery();
             while (resultSet.next()) {

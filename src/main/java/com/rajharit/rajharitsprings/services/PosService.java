@@ -6,7 +6,6 @@ import com.rajharit.rajharitsprings.entities.*;
 import com.rajharit.rajharitsprings.mappers.StockMovementMapper;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,26 +29,22 @@ public class PosService {
         this.stockMovementMapper = stockMovementMapper;
     }
 
-    public List<SaleDto> getSalesData(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<BestSalesDto> getSalesData() {
         return orderDAO.getAll().stream()
                 .filter(order -> order.getStatus() == StatusType.COMPLETED)
-                .filter(order -> !order.getCreatedAt().isBefore(startDate) &&
-                        !order.getCreatedAt().isAfter(endDate))
                 .flatMap(order -> dishOrderDAO.findByOrderId(order.getOrderId()).stream())
                 .map(dishOrder -> {
-                    SaleDto dto = new SaleDto();
+                    BestSalesDto dto = new BestSalesDto();
                     dto.setDishName(dishOrder.getDish().getName());
                     dto.setQuantitySold(dishOrder.getQuantity());
-                    dto.setSaleDate(orderDAO.findById(dishOrder.getOrder().getOrderId()).getCreatedAt());
+                    dto.setTotalAmount(dishOrder.getQuantity() * dishOrder.getDish().getUnitPrice());
                     return dto;
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()).reversed();
     }
 
-    public List<OrderDto> getOrderData(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<OrderDto> getOrderData() {
         return orderDAO.getAll().stream()
-                .filter(order -> !order.getCreatedAt().isBefore(startDate) &&
-                        !order.getCreatedAt().isAfter(endDate))
                 .map(order -> {
                     OrderDto dto = new OrderDto();
                     dto.setReference(order.getReference());

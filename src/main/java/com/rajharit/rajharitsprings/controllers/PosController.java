@@ -2,15 +2,13 @@ package com.rajharit.rajharitsprings.controllers;
 
 import com.rajharit.rajharitsprings.dtos.*;
 import com.rajharit.rajharitsprings.services.PosService;
+import com.rajharit.rajharitsprings.security.ApiKeyManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.rajharit.rajharitsprings.security.ApiKeyManager;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/pos")
 public class PosController {
     private final PosService posService;
     private final ApiKeyManager apiKeyManager;
@@ -21,30 +19,26 @@ public class PosController {
     }
 
     @GetMapping("/sales")
-    public ResponseEntity<List<SaleDto>> getSalesData(
-            @RequestHeader("X-API-KEY") String apiKey,
-            @RequestParam LocalDateTime startDate,
-            @RequestParam LocalDateTime endDate) {
+    public ResponseEntity<List<BestSalesDto>> getSalesData(
+            @RequestHeader("X-API-KEY") String apiKey) {
 
         if (!apiKeyManager.equals(apiKey)) {
             return ResponseEntity.status(401).build();
         }
 
-        List<SaleDto> sales = posService.getSalesData(startDate, endDate);
+        List<BestSalesDto> sales = posService.getSalesData();
         return ResponseEntity.ok(sales);
     }
 
     @GetMapping("/orders")
     public ResponseEntity<List<OrderDto>> getOrderData(
-            @RequestHeader("X-API-KEY") String apiKey,
-            @RequestParam LocalDateTime startDate,
-            @RequestParam LocalDateTime endDate) {
+            @RequestHeader("X-API-KEY") String apiKey) {
 
         if (!apiKeyManager.equals(apiKey)) {
             return ResponseEntity.status(401).build();
         }
 
-        List<OrderDto> orders = posService.getOrderData(startDate, endDate);
+        List<OrderDto> orders = posService.getOrderData();
         return ResponseEntity.ok(orders);
     }
 

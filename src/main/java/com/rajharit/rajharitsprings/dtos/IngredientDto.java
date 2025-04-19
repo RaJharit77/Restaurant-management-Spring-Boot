@@ -13,4 +13,5 @@ public class IngredientDto {
     private LocalDateTime updateDateTime;
     private List<PriceDto> priceHistory;
     private List<StockMovementDto> stockMovements;
+    private double availableQuantity;
 }

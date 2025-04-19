@@ -26,10 +26,9 @@ public class DashboardService {
         this.dashboardDAO = dashboardDAO;
     }
 
-    public List<BestSalesDto> getBestSales(int limit, LocalDateTime startDate, LocalDateTime endDate) {
+    public List<BestSalesDto> getBestSales() {
         List<Order> finishedOrders = orderDAO.getAll().stream()
                 .filter(order -> order.getStatus() == StatusType.FINISHED)
-                .filter(order -> !order.getCreatedAt().isBefore(startDate) && !order.getCreatedAt().isAfter(endDate))
                 .collect(Collectors.toList());
 
         Map<Dish, Integer> dishQuantityMap = new HashMap<>();
@@ -50,13 +49,11 @@ public class DashboardService {
 
         return dishQuantityMap.entrySet().stream()
                 .sorted(Map.Entry.<Dish, Integer>comparingByValue().reversed())
-                .limit(limit)
                 .map(entry -> {
                     BestSalesDto dto = new BestSalesDto();
                     dto.setDishName(entry.getKey().getName());
                     dto.setQuantitySold(entry.getValue());
                     dto.setTotalAmount(dishAmountMap.get(entry.getKey()));
-                    dto.setLastUpdated(LocalDateTime.now());
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -135,7 +132,7 @@ public class DashboardService {
                 return times.stream().min(Long::compare).orElse(0L);
             case "maximum":
                 return times.stream().max(Long::compare).orElse(0L);
-            default: // average
+            default:
                 return times.stream().mapToLong(Long::longValue).average().orElse(0);
         }
     }
@@ -163,8 +160,8 @@ public class DashboardService {
     }
 
     @Transactional
-    public void calculateAndSaveBestSalesData(LocalDateTime startDate, LocalDateTime endDate) {
-        List<BestSalesDto> bestSales = getBestSales(Integer.MAX_VALUE, startDate, endDate);
+    public void calculateAndSaveBestSalesData() {
+        List<BestSalesDto> bestSales = getBestSales();
 
         List<BestSales> dataToSave = bestSales.stream()
                 .map(dto -> {
@@ -172,8 +169,6 @@ public class DashboardService {
                     data.setDishName(dto.getDishName());
                     data.setQuantitySold(dto.getQuantitySold());
                     data.setTotalAmount(dto.getTotalAmount());
-                    data.setStartDate(startDate);
-                    data.setEndDate(endDate);
                     data.setCalculationDate(LocalDateTime.now());
                     return data;
                 })
@@ -199,8 +194,8 @@ public class DashboardService {
         dashboardDAO.saveProcessingTimeData(data);
     }
 
-    public List<BestSalesDto> getPreCalculatedBestSales(LocalDateTime startDate, LocalDateTime endDate) {
-        List<BestSales> data = dashboardDAO.getBestSalesData(startDate, endDate);
+    public List<BestSalesDto> getPreCalculatedBestSales() {
+        List<BestSales> data = dashboardDAO.getBestSalesData();
 
         return data.stream()
                 .map(d -> {
@@ -208,7 +203,6 @@ public class DashboardService {
                     dto.setDishName(d.getDishName());
                     dto.setQuantitySold(d.getQuantitySold());
                     dto.setTotalAmount(d.getTotalAmount());
-                    dto.setLastUpdated(d.getCalculationDate());
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -231,8 +225,8 @@ public class DashboardService {
         return dto;
     }
 
-    public List<BestSalesDto> getBestSalesFromDB(int limit, LocalDateTime startDate, LocalDateTime endDate) {
-        List<BestSales> data = dashboardDAO.getBestSalesDataFromDB(startDate, endDate, limit);
+    public List<BestSalesDto> getBestSalesFromDB() {
+        List<BestSales> data = dashboardDAO.getBestSalesDataFromDB();
 
         return data.stream()
                 .map(d -> {
@@ -240,7 +234,6 @@ public class DashboardService {
                     dto.setDishName(d.getDishName());
                     dto.setQuantitySold(d.getQuantitySold());
                     dto.setTotalAmount(d.getTotalAmount());
-                    dto.setLastUpdated(LocalDateTime.now());
                     return dto;
                 })
                 .collect(Collectors.toList());

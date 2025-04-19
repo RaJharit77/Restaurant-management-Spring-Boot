@@ -8,5 +8,4 @@ public class BestSalesDto {
     private String dishName;
     private int quantitySold;
     private double totalAmount;
-    private LocalDateTime lastUpdated;
 }
