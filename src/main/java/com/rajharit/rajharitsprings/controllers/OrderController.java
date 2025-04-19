@@ -12,7 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/orders")
@@ -102,6 +105,26 @@ public class OrderController {
         }
     }
 
+    @GetMapping("/{reference}/dishes/{dishId}/status")
+    public ResponseEntity<?> getDishStatus(
+            @PathVariable String reference,
+            @PathVariable Integer dishId) {
+        try {
+            StatusType status = orderService.getDishStatus(reference, dishId);
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", status);
+            response.put("dishId", dishId);
+            response.put("reference", reference);
+            return ResponseEntity.ok(response);
+        } catch (ResourceNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Error retrieving dish status"));
+        }
+    }
+
     @PutMapping("/{reference}/dishes/{dishId}")
     public ResponseEntity<?> updateDishStatus(
             @PathVariable String reference,
@@ -111,14 +134,14 @@ public class OrderController {
             OrderDto updatedOrder = orderService.updateDishStatus(reference, dishId, statusUpdate.getStatus());
             return ResponseEntity.ok(updatedOrder);
         } catch (ResourceNotFoundException e) {
-            logger.error("Resource not found for order: " + reference, e);
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", e.getMessage()));
         } catch (BusinessException e) {
-            logger.error("Business error updating dish status: " + reference, e);
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.singletonMap("error", e.getMessage()));
         } catch (Exception e) {
-            logger.error("Error updating dish status: " + reference, e);
-            return ResponseEntity.internalServerError().body("Error updating dish status");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "Error updating dish status"));
         }
     }
 

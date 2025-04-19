@@ -64,6 +64,23 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
+    public StatusType getDishStatus(String reference, int dishId) {
+        Order order = orderDAO.findByReference(reference);
+        if (order == null) {
+            throw new ResourceNotFoundException("Order not found with reference: " + reference);
+        }
+
+        List<DishOrder> dishOrders = dishOrderDAO.findByOrderId(order.getOrderId());
+
+        return dishOrders.stream()
+                .filter(dishOrder -> dishOrder.getDish().getId() == dishId)
+                .findFirst()
+                .map(DishOrder::getStatus)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Dish with id " + dishId + " not found in order " + reference));
+    }
+
+    @Transactional(readOnly = true)
     public OrderDto getOrderByReference(String reference) {
         try {
             Order order = orderDAO.findByReference(reference);
@@ -91,7 +108,6 @@ public class OrderService {
             if (!orderStatusHistory.isEmpty()) {
                 order.setActualStatus(orderStatusHistory.get(orderStatusHistory.size()-1).getStatus());
             }
-
             OrderDto dto = orderMapper.toDto(order);
             dto.setTotalAmount(order.getTotalAmount());
             return dto;
@@ -108,6 +124,8 @@ public class OrderService {
             throw new ResourceNotFoundException("Order not found with reference: " + reference);
         }
 
+        List<DishOrder> dishOrders = dishOrderDAO.findByOrderId(order.getOrderId());
+
         return order.getDishOrders().stream()
                 .map(dishOrder -> {
                     DishOrderDto dto = new DishOrderDto();
@@ -123,16 +141,6 @@ public class OrderService {
     @Transactional
     public OrderDto addDishToOrder(String reference, DishOrderDto dishOrderDto) {
         try {
-            if (dishOrderDto == null) {
-                throw new BusinessException("Les données du plat sont requises");
-            }
-            if (dishOrderDto.getDishId() <= 0) {
-                throw new BusinessException("L'ID du plat est invalide");
-            }
-            if (dishOrderDto.getQuantity() <= 0) {
-                throw new BusinessException("La quantité doit être positive");
-            }
-
             Order order = orderDAO.findByReference(reference);
             if (order == null) {
                 throw new ResourceNotFoundException("Commande non trouvée: " + reference);
@@ -141,6 +149,13 @@ public class OrderService {
             Dish dish = dishDAO.findById(dishOrderDto.getDishId());
             if (dish == null) {
                 throw new ResourceNotFoundException("Plat non trouvé avec l'ID: " + dishOrderDto.getDishId());
+            }
+
+            boolean dishExists = order.getDishOrders().stream()
+                    .anyMatch(dishOrder -> dishOrder.getDish().getId() == dishOrderDto.getDishId());
+
+            if (dishExists) {
+                throw new BusinessException("Le plat existe déjà dans la commande");
             }
 
             DishOrder dishOrder = new DishOrder();
@@ -156,11 +171,10 @@ public class OrderService {
             initialStatus.setChangedAt(LocalDateTime.now());
             dishOrderStatusDAO.save(initialStatus, savedDishOrder.getDishOrderId());
 
-            order.getDishOrders().add(savedDishOrder);
-
-            return orderMapper.toDto(order);
+            Order refreshedOrder = orderDAO.findByReference(reference);
+            return orderMapper.toDto(refreshedOrder);
         } catch (Exception e) {
-            logger.error("Erreur inattendue lors de l'ajout du plat", e);
+            logger.error("Erreur lors de l'ajout du plat", e);
             throw new BusinessException("Erreur lors de l'ajout du plat: " + e.getMessage());
         }
     }

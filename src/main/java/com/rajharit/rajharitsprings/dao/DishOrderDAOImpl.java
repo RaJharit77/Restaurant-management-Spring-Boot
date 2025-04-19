@@ -2,6 +2,8 @@ package com.rajharit.rajharitsprings.dao;
 
 import com.rajharit.rajharitsprings.entities.*;
 import com.rajharit.rajharitsprings.config.DataBaseSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
 import java.sql.*;
@@ -11,9 +13,12 @@ import java.util.List;
 @Repository
 public class DishOrderDAOImpl implements DishOrderDAO {
     private final DataBaseSource dataBaseSource;
+    private DishDAO dishDAO;
+    private static final Logger logger = LoggerFactory.getLogger(DishOrderDAOImpl.class);
 
-    public DishOrderDAOImpl(DataBaseSource dataBaseSource) {
+    public DishOrderDAOImpl(DataBaseSource dataBaseSource, DishDAO dishDAO) {
         this.dataBaseSource = dataBaseSource;
+        this.dishDAO = dishDAO;
     }
 
     @Override
@@ -35,18 +40,29 @@ public class DishOrderDAOImpl implements DishOrderDAO {
     @Override
     public List<DishOrder> findByOrderId(int orderId) {
         String query = "SELECT * FROM Dish_Order WHERE order_id = ?";
+
         List<DishOrder> dishOrders = new ArrayList<>();
         try (Connection connection = dataBaseSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
+
             statement.setInt(1, orderId);
-            ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                dishOrders.add(mapDishOrder(resultSet));
+            ResultSet rs = statement.executeQuery();
+
+            while (rs.next()) {
+                DishOrder dishOrder = new DishOrder();
+                dishOrder.setDishOrderId(rs.getInt("dish_order_id"));
+                dishOrder.setQuantity(rs.getInt("quantity"));
+
+                Dish dish = dishDAO.findById(rs.getInt("dish_id"));
+                dishOrder.setDish(dish);
+
+                dishOrders.add(dishOrder);
             }
+            return dishOrders;
         } catch (SQLException e) {
+            logger.error("Error retrieving dish orders by order id", e);
             throw new RuntimeException("Error retrieving dish orders by order id", e);
         }
-        return dishOrders;
     }
 
     @Override

@@ -15,17 +15,18 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class OrderDishOrderTest {
-    private OrderDAO orderDAO;
-    private OrderStatusDAO orderStatusDAO;
-    private DishOrderDAO dishOrderDAO;
     private DataBaseSource dataBaseSource;
     private DataBaseCleaner databaseCleaner;
+    private DishOrderDAO dishOrderDAO;
+    private OrderDAO orderDAO;
+    private OrderStatusDAO orderStatusDAO;
 
     @BeforeEach
     void setUp() {
         dataBaseSource = new DataBaseSource();
+        DishDAO dishDAO = new DishDAOImpl(dataBaseSource);
+        dishOrderDAO = new DishOrderDAOImpl(dataBaseSource, dishDAO);
         orderDAO = new OrderDAOImpl(dataBaseSource);
-        dishOrderDAO = new DishOrderDAOImpl(dataBaseSource);
         orderStatusDAO = new OrderStatusDAOImpl(dataBaseSource);
         databaseCleaner = new DataBaseCleaner(dataBaseSource);
 
