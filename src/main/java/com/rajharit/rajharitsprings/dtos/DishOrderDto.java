@@ -9,10 +9,10 @@ import lombok.Data;
 @Data
 public class DishOrderDto {
     @NotNull(message = "L'ID du plat est requis")
-    private Integer dishId;
+    private int dishId;
     private String dishName;
     @NotNull(message = "La quantité est requise")
     @Min(value = 1, message = "La quantité doit être au moins 1")
-    private Integer quantity;
+    private int quantity;
     private StatusType actualOrderStatus;
 }

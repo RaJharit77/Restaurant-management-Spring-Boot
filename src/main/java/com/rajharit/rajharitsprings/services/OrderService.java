@@ -195,7 +195,7 @@ public class OrderService {
 
         List<DishOrder> matchingDishOrders = dishOrders.stream()
                 .filter(d -> d.getDish().getId() == dishId)
-                .collect(Collectors.toList());
+                .toList();
 
         if (matchingDishOrders.isEmpty()) {
             throw new ResourceNotFoundException("Dish with id " + dishId + " not found in order " + reference);
@@ -217,6 +217,8 @@ public class OrderService {
 
         if (allDelivered) {
             order.setActualStatus(StatusType.DELIVERED);
+            orderDAO.updateStatus(order.getOrderId(), StatusType.DELIVERED);
+
             OrderStatus orderStatus = new OrderStatus();
             orderStatus.setStatus(StatusType.DELIVERED);
             orderStatus.setChangedAt(LocalDateTime.now());

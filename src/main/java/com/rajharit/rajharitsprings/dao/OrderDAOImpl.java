@@ -32,12 +32,39 @@ public class OrderDAOImpl implements OrderDAO {
                 order.setReference(resultSet.getString("reference"));
                 order.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
                 order.setActualStatus(StatusType.valueOf(resultSet.getString("status")));
+
+                order.setDishOrders(loadDishOrders(connection, order.getOrderId()));
+
                 orders.add(order);
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error retrieving all orders", e);
         }
         return orders;
+    }
+
+    private List<DishOrder> loadDishOrders(Connection connection, int orderId) throws SQLException {
+        String query = "SELECT * FROM dish_order WHERE order_id = ?";
+        List<DishOrder> dishOrders = new ArrayList<>();
+
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, orderId);
+            ResultSet rs = statement.executeQuery();
+
+            while (rs.next()) {
+                DishOrder dishOrder = new DishOrder();
+                dishOrder.setDishOrderId(rs.getInt("dish_order_id"));
+                dishOrder.setQuantity(rs.getInt("quantity"));
+                dishOrder.setStatus(StatusType.valueOf(rs.getString("status")));
+
+                Dish dish = new Dish();
+                dish.setId(rs.getInt("dish_id"));
+                dishOrder.setDish(dish);
+
+                dishOrders.add(dishOrder);
+            }
+        }
+        return dishOrders;
     }
 
     @Override
@@ -59,6 +86,36 @@ public class OrderDAOImpl implements OrderDAO {
             throw new RuntimeException("Error retrieving order", e);
         }
         return null;
+    }
+
+    @Override
+    public List<Order> findByStatus(StatusType status) {
+        String query = "SELECT * FROM \"Order\" WHERE status = ?::status_type";
+        List<Order> orders = new ArrayList<>();
+
+        try (Connection connection = dataBaseSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, status.name());
+            ResultSet rs = statement.executeQuery();
+
+            while (rs.next()) {
+                Order order = new Order();
+                order.setOrderId(rs.getInt("order_id"));
+                order.setReference(rs.getString("reference"));
+                order.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
+                order.setActualStatus(status);
+
+                List<DishOrder> dishOrders = loadDishOrders(connection, order.getOrderId());
+                order.setDishOrders(dishOrders);
+
+                orders.add(order);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error finding orders by status", e);
+        }
+
+        return orders;
     }
 
     @Override
@@ -154,7 +211,10 @@ public class OrderDAOImpl implements OrderDAO {
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, status.name());
             statement.setInt(2, orderId);
-            statement.executeUpdate();
+            int updatedRows = statement.executeUpdate();
+            if (updatedRows == 0) {
+                throw new RuntimeException("No order found with id: " + orderId);
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error updating order status", e);
         }
