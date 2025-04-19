@@ -4,11 +4,13 @@ import com.rajharit.rajharitsprings.dtos.*;
 import com.rajharit.rajharitsprings.dao.*;
 import com.rajharit.rajharitsprings.entities.*;
 import com.rajharit.rajharitsprings.mappers.StockMovementMapper;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Service
 public class PosService {
     private final OrderDAO orderDAO;
     private final DishOrderDAO dishOrderDAO;

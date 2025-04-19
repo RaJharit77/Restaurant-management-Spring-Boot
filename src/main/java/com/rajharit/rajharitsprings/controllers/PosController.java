@@ -4,18 +4,20 @@ import com.rajharit.rajharitsprings.dtos.*;
 import com.rajharit.rajharitsprings.services.PosService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.rajharit.rajharitsprings.security.ApiKeyManager;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/pos")
+@RequestMapping("/pos")
 public class PosController {
     private final PosService posService;
-    private final String API_KEY = "SECRET_API_KEY"; // À remplacer par votre clé API
+    private final ApiKeyManager apiKeyManager;
 
-    public PosController(PosService posService) {
+    public PosController(PosService posService, ApiKeyManager apiKeyManager) {
         this.posService = posService;
+        this.apiKeyManager = apiKeyManager;
     }
 
     @GetMapping("/sales")
@@ -24,7 +26,7 @@ public class PosController {
             @RequestParam LocalDateTime startDate,
             @RequestParam LocalDateTime endDate) {
 
-        if (!API_KEY.equals(apiKey)) {
+        if (!apiKeyManager.equals(apiKey)) {
             return ResponseEntity.status(401).build();
         }
 
@@ -38,7 +40,7 @@ public class PosController {
             @RequestParam LocalDateTime startDate,
             @RequestParam LocalDateTime endDate) {
 
-        if (!API_KEY.equals(apiKey)) {
+        if (!apiKeyManager.equals(apiKey)) {
             return ResponseEntity.status(401).build();
         }
 
@@ -47,14 +49,14 @@ public class PosController {
     }
 
     @GetMapping("/stock/movements")
-    public ResponseEntity<List<StockMovementDto>> getStockMovements(
+    public ResponseEntity<List<StockMovementDto>> getStockMovements(int id,
             @RequestHeader("X-API-KEY") String apiKey) {
 
-        if (!API_KEY.equals(apiKey)) {
+        if (!apiKeyManager.equals(apiKey)) {
             return ResponseEntity.status(401).build();
         }
 
-        List<StockMovementDto> movements = posService.getStockMovements();
+        List<StockMovementDto> movements = posService.getStockMovements(id);
         return ResponseEntity.ok(movements);
     }
 
@@ -62,7 +64,7 @@ public class PosController {
     public ResponseEntity<List<IngredientPriceDto>> getIngredientPrices(
             @RequestHeader("X-API-KEY") String apiKey) {
 
-        if (!API_KEY.equals(apiKey)) {
+        if (!apiKeyManager.equals(apiKey)) {
             return ResponseEntity.status(401).build();
         }
 
