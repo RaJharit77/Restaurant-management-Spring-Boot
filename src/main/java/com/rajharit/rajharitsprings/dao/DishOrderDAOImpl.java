@@ -83,6 +83,7 @@ public class DishOrderDAOImpl implements DishOrderDAO {
             statement.setString(4, dishOrder.getStatus().name());
 
             ResultSet resultSet = statement.executeQuery();
+
             if (resultSet.next()) {
                 dishOrder.setDishOrderId(resultSet.getInt("dish_order_id"));
             }
@@ -110,13 +111,21 @@ public class DishOrderDAOImpl implements DishOrderDAO {
     }
 
     @Override
-    public void updateStatus(int dishOrderId, StatusType status) {
-        String query = "UPDATE Dish_Order SET status = ?::dish_status WHERE dish_order_id = ?";
+    public void updateStatus(DishOrder dishOrder) {
+        String query = "UPDATE Dish_Order SET quantity = ?, status = ?::status_type WHERE dish_order_id = ?";
         try (Connection connection = dataBaseSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
-            statement.setString(1, status.name());
-            statement.setInt(2, dishOrderId);
-            statement.executeUpdate();
+
+            statement.setInt(1, dishOrder.getQuantity());
+            statement.setString(2, dishOrder.getStatus().name());
+            statement.setInt(3, dishOrder.getDishOrderId());
+
+            int affectedRows = statement.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new RuntimeException("No dish order updated");
+            }
+
         } catch (SQLException e) {
             throw new RuntimeException("Error updating dish order status", e);
         }
@@ -128,8 +137,8 @@ public class DishOrderDAOImpl implements DishOrderDAO {
 
         Dish dish = new Dish();
         dish.setId(resultSet.getInt("dish_id"));
-        dish.setName(resultSet.getString("name"));
-        dish.setUnitPrice(resultSet.getDouble("unit_price"));
+        /*dish.setName(resultSet.getString("name"));
+        dish.setUnitPrice(resultSet.getDouble("unit_price"));*/
 
         dishOrder.setDish(dish);
         dishOrder.setQuantity(resultSet.getInt("quantity"));

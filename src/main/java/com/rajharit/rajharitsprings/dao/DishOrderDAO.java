@@ -12,5 +12,5 @@ public interface DishOrderDAO {
 
     List<DishOrder> findByDishId(int dishId);
 
-    void updateStatus(int dishOrderId, StatusType status);
+    void updateStatus(DishOrder dishOrder);
 }

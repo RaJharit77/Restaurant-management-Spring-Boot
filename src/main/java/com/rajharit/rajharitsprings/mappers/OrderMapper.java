@@ -46,13 +46,4 @@ public class OrderMapper {
         dto.setActualOrderStatus(dishOrder.getStatus());
         return dto;
     }
-
-    /*private double calculateTotalAmount(Order order) {
-        if (order.getDishOrders() == null) {
-            return 0.0;
-        }
-        return order.getDishOrders().stream()
-                .mapToDouble(dishOrder -> dishOrder.getDish().getUnitPrice() * dishOrder.getQuantity())
-                .sum();
-    }*/
 }
