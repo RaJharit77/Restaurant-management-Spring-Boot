@@ -12,7 +12,7 @@ public interface DishDAO {
 
     List<Dish> saveAll(List<Dish> dishes);
 
-    void deleteDish(int id);
-
     List<Dish> filterDish(String name, double unitPrice, List<Ingredient> dishIngredient);
+
+    void deleteDish(int id);
 }

@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/dishes")
@@ -29,5 +30,17 @@ public class DishController {
             @RequestBody List<DishIngredientDto> ingredients) {
         DishDto updatedDish = dishService.updateDishIngredients(id, ingredients);
         return ResponseEntity.ok(updatedDish);
+    }
+
+    @PostMapping
+    public ResponseEntity<DishDto> createDish(@RequestBody DishDto dishDto) {
+        DishDto createdDish = dishService.createDish(dishDto);
+        return ResponseEntity.ok(createdDish);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteDishesId(int id) {
+        dishService.deleteDishesId(id);
+        return ResponseEntity.noContent().build();
     }
 }

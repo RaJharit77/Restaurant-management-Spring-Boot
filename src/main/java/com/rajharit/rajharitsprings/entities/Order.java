@@ -15,20 +15,20 @@ public class Order {
     private int orderId;
     private String reference;
     private LocalDateTime createdAt;
-    private StatusType status;
+    private StatusType actualStatus;
     @Getter
     private List<DishOrder> dishOrders = new ArrayList<>();
     private List<OrderStatus> statusHistory;
 
     public Order() {
-        this.status = StatusType.CREATED;
+        this.actualStatus = StatusType.CREATED;
     }
 
-    public Order(int orderId, String reference, LocalDateTime createdAt, StatusType status, List<DishOrder> dishOrders) {
+    public Order(int orderId, String reference, LocalDateTime createdAt, StatusType actualStatus, List<DishOrder> dishOrders) {
         this.orderId = orderId;
         this.reference = reference;
         this.createdAt = createdAt;
-        this.status = status;
+        this.actualStatus = actualStatus;
         this.dishOrders = dishOrders;
     }
 
@@ -51,14 +51,14 @@ public class Order {
     }
 
     public void confirmOrder() {
-        if (this.status != StatusType.CREATED) {
+        if (this.actualStatus != StatusType.CREATED) {
             throw new InvalidStatusTransitionException(
-                    "Cannot confirm order from current status: " + this.status);
+                    "Cannot confirm order from current status: " + this.actualStatus);
         }
 
         checkStockAvailability();
 
-        this.status = StatusType.CONFIRMED;
+        this.actualStatus = StatusType.CONFIRMED;
         this.statusHistory.add(new OrderStatus(0, StatusType.CONFIRMED, LocalDateTime.now()));
     }
 
@@ -87,27 +87,27 @@ public class Order {
             case CREATED:
                 return newStatus == StatusType.CONFIRMED;
             case CONFIRMED:
-                return newStatus == StatusType.IN_PREPARATION;
-            case IN_PREPARATION:
-                return newStatus == StatusType.COMPLETED;
-            case COMPLETED:
-                return newStatus == StatusType.SERVED;
+                return newStatus == StatusType.IN_PROGRESS;
+            case IN_PROGRESS:N:
+                return newStatus == StatusType.FINISHED;
+            case FINISHED:
+                return newStatus == StatusType.DELIVERED;
             default:
                 return false;
         }
     }
 
     public void updateStatus(StatusType newStatus) {
-        if (!isValidTransition(this.status, newStatus)) {
+        if (!isValidTransition(this.actualStatus, newStatus)) {
             throw new InvalidStatusTransitionException(
-                    "Transition invalide de " + this.status + " à " + newStatus);
+                    "Transition invalide de " + this.actualStatus + " à " + newStatus);
         }
 
         if (newStatus == StatusType.CONFIRMED) {
             checkStockAvailability();
         }
 
-        this.status = newStatus;
+        this.actualStatus = newStatus;
         if (statusHistory == null) {
             statusHistory = new ArrayList<>();
         }

@@ -1,1 +1,1 @@
-CREATE TYPE movement_type AS ENUM ('ENTRY', 'EXIT');
+CREATE TYPE movement_type AS ENUM ('IN', 'OUT');

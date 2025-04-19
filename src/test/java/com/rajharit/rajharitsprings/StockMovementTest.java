@@ -34,7 +34,7 @@ public class StockMovementTest {
 
     @Test
     void testSaveStockMovement() {
-        StockMovement stockMovement = new StockMovement(0, 1, MovementType.ENTRY, 100, Unit.U, LocalDateTime.of(2025, 2, 1, 8, 0));
+        StockMovement stockMovement = new StockMovement(0, 1, MovementType.IN, 100, Unit.U, LocalDateTime.of(2025, 2, 1, 8, 0));
         stockMovementImpl.saveStockMovement(stockMovement);
 
         List<StockMovement> stockMovements = stockMovementImpl.getStockMovementsByIngredientId(1);
@@ -45,8 +45,8 @@ public class StockMovementTest {
 
     @Test
     void testGetStockMovementsByIngredientId() {
-        StockMovement stockMovement1 = new StockMovement(0, 1, MovementType.ENTRY, 100, Unit.U, LocalDateTime.of(2025, 2, 1, 8, 0));
-        StockMovement stockMovement2 = new StockMovement(0, 1, MovementType.EXIT, 10, Unit.U, LocalDateTime.of(2025, 2, 2, 10, 0));
+        StockMovement stockMovement1 = new StockMovement(0, 1, MovementType.IN, 100, Unit.U, LocalDateTime.of(2025, 2, 1, 8, 0));
+        StockMovement stockMovement2 = new StockMovement(0, 1, MovementType.OUT, 10, Unit.U, LocalDateTime.of(2025, 2, 2, 10, 0));
         stockMovementImpl.saveStockMovement(stockMovement1);
         stockMovementImpl.saveStockMovement(stockMovement2);
 
@@ -69,13 +69,13 @@ public class StockMovementTest {
         int selId = savedIngredients.get(0).getId();
         int rizId = savedIngredients.get(1).getId();
 
-        StockMovement selEntry1 = new StockMovement(0, selId, MovementType.ENTRY, 500, Unit.G, LocalDateTime.of(2025, 2, 1, 8, 0));
-        StockMovement selExit1 = new StockMovement(0, selId, MovementType.EXIT, 100, Unit.G, LocalDateTime.of(2025, 2, 2, 10, 0));
+        StockMovement selEntry1 = new StockMovement(0, selId, MovementType.IN, 500, Unit.G, LocalDateTime.of(2025, 2, 1, 8, 0));
+        StockMovement selExit1 = new StockMovement(0, selId, MovementType.OUT, 100, Unit.G, LocalDateTime.of(2025, 2, 2, 10, 0));
         stockMovementImpl.saveStockMovement(selEntry1);
         stockMovementImpl.saveStockMovement(selExit1);
 
-        StockMovement rizEntry1 = new StockMovement(0, rizId, MovementType.ENTRY, 1000, Unit.G, LocalDateTime.of(2025, 2, 1, 8, 0));
-        StockMovement rizExit1 = new StockMovement(0, rizId, MovementType.EXIT, 200, Unit.G, LocalDateTime.of(2025, 2, 2, 10, 0));
+        StockMovement rizEntry1 = new StockMovement(0, rizId, MovementType.IN, 1000, Unit.G, LocalDateTime.of(2025, 2, 1, 8, 0));
+        StockMovement rizExit1 = new StockMovement(0, rizId, MovementType.OUT, 200, Unit.G, LocalDateTime.of(2025, 2, 2, 10, 0));
         stockMovementImpl.saveStockMovement(rizEntry1);
         stockMovementImpl.saveStockMovement(rizExit1);
 

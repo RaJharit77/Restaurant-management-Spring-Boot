@@ -47,8 +47,8 @@ public class DishService {
                     if (ingredient == null) {
                         throw new ResourceNotFoundException("Ingredient not found with id: " + dto.getIngredientId());
                     }
-                    ingredient.setRequiredQuantity(dto.getQuantity());
-                    ingredient.setUnit(Unit.valueOf(dto.getUnit()));
+                    ingredient.setAvailableQuantity(dto.getQuantity());
+                    ingredient.setUnit(dto.getUnit());
                     return ingredient;
                 })
                 .collect(Collectors.toList());
@@ -56,5 +56,18 @@ public class DishService {
         dish.setIngredients(dishIngredients);
         Dish updatedDish = (Dish) dishRepository.saveAll((List<Dish>) dish);
         return dishMapper.toDto(updatedDish);
+    }
+
+    public DishDto createDish(DishDto dishDto) {
+        Dish dish = new Dish();
+        dish.setName(dishDto.getName());
+        dish.setUnitPrice(dishDto.getUnitPrice());
+
+        Dish savedDish = dishRepository.saveAll(List.of(dish)).getFirst();
+        return dishMapper.toDto(savedDish);
+    }
+
+    public void deleteDishesId(int id) {
+        dishRepository.deleteDish(id);
     }
 }

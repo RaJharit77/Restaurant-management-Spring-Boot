@@ -1,11 +1,12 @@
 package com.rajharit.rajharitsprings.dtos;
 
+import com.rajharit.rajharitsprings.entities.StatusType;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
 public class OrderUpdateDto {
-    private String status;
+    private StatusType status;
     private List<OrderDishUpdateDto> dishes;
 }

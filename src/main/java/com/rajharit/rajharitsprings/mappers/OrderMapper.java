@@ -1,9 +1,10 @@
 package com.rajharit.rajharitsprings.mappers;
 
-import com.rajharit.rajharitsprings.dtos.OrderDishDto;
+import com.rajharit.rajharitsprings.dtos.DishOrderDto;
 import com.rajharit.rajharitsprings.dtos.OrderDto;
 import com.rajharit.rajharitsprings.entities.DishOrder;
 import com.rajharit.rajharitsprings.entities.Order;
+import com.rajharit.rajharitsprings.entities.StatusType;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -16,25 +17,35 @@ public class OrderMapper {
         dto.setOrderId(order.getOrderId());
         dto.setReference(order.getReference());
         dto.setCreatedAt(order.getCreatedAt());
-        dto.setStatus(order.getStatus().name());
+        dto.setActualStatus(StatusType.valueOf(String.valueOf(order.getActualStatus())));
+        dto.setTotalAmount(calculateTotalAmount(order));
 
         if (order.getDishOrders() != null) {
-            List<OrderDishDto> dishDtos = order.getDishOrders().stream()
-                    .map(this::toOrderDishDto)
+            List<DishOrderDto> dishDtos = order.getDishOrders().stream()
+                    .map(this::toDishOrderDto)
                     .collect(Collectors.toList());
-            dto.setDishes(dishDtos);
+            dto.setDishOrders(dishDtos);
         }
 
         return dto;
     }
 
-    private OrderDishDto toOrderDishDto(DishOrder dishOrder) {
-        OrderDishDto dto = new OrderDishDto();
+    private DishOrderDto toDishOrderDto(DishOrder dishOrder) {
+        DishOrderDto dto = new DishOrderDto();
         dto.setDishId(dishOrder.getDish().getId());
         dto.setDishName(dishOrder.getDish().getName());
-        dto.setDishPrice(dishOrder.getDish().getUnitPrice());
-        dto.setQuantity(dishOrder.getQuantity());
-        dto.setStatus(dishOrder.getStatus().name());
+        dto.setQuantityOrdered(dishOrder.getQuantity());
+        dto.setActualOrderStatus(dishOrder.getStatus());
         return dto;
+    }
+
+    private double calculateTotalAmount(Order order) {
+        if (order.getDishOrders() == null) {
+            return 0.0;
+        }
+
+        return order.getDishOrders().stream()
+                .mapToDouble(dishOrder -> dishOrder.getDish().getUnitPrice() * dishOrder.getQuantity())
+                .sum();
     }
 }

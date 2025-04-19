@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/dashboard")
 public class DashboardController {
     private final DashboardService dashboardService;
 
@@ -38,7 +37,7 @@ public class DashboardController {
                 dishId, startDate, endDate, timeUnit, calculationType);
 
         return ResponseEntity.ok(processingTime);
-    }*/
+    }
 
     @PostMapping("/bestSales")
     public ResponseEntity<Void> calculateBestSales() {
@@ -46,7 +45,7 @@ public class DashboardController {
         return ResponseEntity.ok().build();
     }
 
-    /*@PostMapping("/dishes/{dishId}/processingTime")
+    @PostMapping("/dishes/{dishId}/processingTime")
     public ResponseEntity<Void> calculateProcessingTime(
             @PathVariable int dishId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -58,7 +57,7 @@ public class DashboardController {
                 dishId, startDate, endDate, timeUnit, calculationType);
 
         return ResponseEntity.ok().build();
-    }*/
+    }
 
     @GetMapping("/preCalculated/bestSales")
     public ResponseEntity<List<BestSalesDto>> getPreCalculatedBestSales() {
@@ -67,7 +66,7 @@ public class DashboardController {
         return ResponseEntity.ok(bestSales);
     }
 
-    /*@GetMapping("/dishes/{dishId}/processingTime")
+    @GetMapping("/dishes/{dishId}/processingTime")
     public ResponseEntity<ProcessingTimeDto> getPreCalculatedProcessingTime(
             @PathVariable int dishId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -79,7 +78,7 @@ public class DashboardController {
                 dishId, startDate, endDate, timeUnit, calculationType);
 
         return ResponseEntity.ok(processingTime);
-    }*/
+    }
 
     @GetMapping("/dbCalculated/bestSales")
     public ResponseEntity<List<BestSalesDto>> getBestSalesFromDB() {
@@ -88,7 +87,7 @@ public class DashboardController {
         return ResponseEntity.ok(bestSales);
     }
 
-    /*@GetMapping("/dbCalculated/dishes/{dishId}/processingTime")
+    @GetMapping("/dbCalculated/dishes/{dishId}/processingTime")
     public ResponseEntity<ProcessingTimeDto> getProcessingTimeFromDB(
             @PathVariable int dishId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,

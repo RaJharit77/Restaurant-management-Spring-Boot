@@ -30,7 +30,7 @@ public class Dish {
 
     public double getIngredientCostAtDate(LocalDateTime date) {
         return ingredients.stream()
-                .mapToDouble(di -> di.getRequiredQuantity() * di.getPriceAtDate(date))
+                .mapToDouble(di -> di.getAvailableQuantity() * di.getPriceAtDate(date))
                 .sum();
     }
 
@@ -48,10 +48,10 @@ public class Dish {
         }
 
         return ingredients.stream()
-                .filter(ingredient -> ingredient.getRequiredQuantity() > 0)
+                .filter(ingredient -> ingredient.getAvailableQuantity() > 0)
                 .mapToDouble(ingredient -> {
                     double ingredientAvailableQuantity = ingredient.getAvailableQuantity(date);
-                    double requiredQuantity = ingredient.getRequiredQuantity();
+                    double requiredQuantity = ingredient.getAvailableQuantity();
                     return ingredientAvailableQuantity / requiredQuantity;
                 })
                 .min()

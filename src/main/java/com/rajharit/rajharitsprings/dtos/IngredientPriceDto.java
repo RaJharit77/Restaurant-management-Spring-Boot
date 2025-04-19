@@ -1,5 +1,6 @@
 package com.rajharit.rajharitsprings.dtos;
 
+import com.rajharit.rajharitsprings.entities.Unit;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -8,6 +9,6 @@ import java.time.LocalDateTime;
 public class IngredientPriceDto {
     private String ingredientName;
     private double currentPrice;
-    private String unit;
+    private Unit unit;
     private LocalDateTime updateDateTime;
 }

@@ -46,7 +46,7 @@ public class IngredientTest {
     void testDeleteIngredient() {
         Ingredient ingredient = new Ingredient();
         ingredient.setName("Fromage");
-        ingredient.setUnitPrice(1000);
+        ingredient.setActualPrice(1000);
         ingredient.setUnit(Unit.G);
         ingredient.setUpdateDateTime(LocalDateTime.now());
 
@@ -62,14 +62,14 @@ public class IngredientTest {
     void testFilterIngredients() {
         Ingredient ingredient1 = new Ingredient();
         ingredient1.setName("Tomate");
-        ingredient1.setUnitPrice(500);
+        ingredient1.setActualPrice(500);
         ingredient1.setUnit(Unit.G);
         ingredient1.setUpdateDateTime(LocalDateTime.now());
         ingredientDAO.saveAll(List.of(ingredient1));
 
         Ingredient ingredient2 = new Ingredient();
         ingredient2.setName("Oignon");
-        ingredient2.setUnitPrice(300);
+        ingredient2.setActualPrice(300);
         ingredient2.setUnit(Unit.G);
         ingredient2.setUpdateDateTime(LocalDateTime.now());
         ingredientDAO.saveAll(List.of(ingredient2));
@@ -83,9 +83,9 @@ public class IngredientTest {
     @Test
     public void testGetAvailableQuantity() {
         Ingredient oeuf = new Ingredient(1, "Oeuf", 0.20, Unit.U, LocalDateTime.of(2025, 2, 1, 8, 0), 0);
-        oeuf.getStockMovements().add(new StockMovement(1, 1, MovementType.ENTRY, 100, Unit.U, LocalDateTime.of(2025, 2, 1, 8, 0)));
-        oeuf.getStockMovements().add(new StockMovement(2, 1, MovementType.EXIT, 10, Unit.U, LocalDateTime.of(2025, 2, 2, 10, 0)));
-        oeuf.getStockMovements().add(new StockMovement(3, 1, MovementType.EXIT, 10, Unit.U, LocalDateTime.of(2025, 2, 3, 15, 0)));
+        oeuf.getStockMovements().add(new StockMovement(1, 1, MovementType.IN, 100, Unit.U, LocalDateTime.of(2025, 2, 1, 8, 0)));
+        oeuf.getStockMovements().add(new StockMovement(2, 1, MovementType.OUT, 10, Unit.U, LocalDateTime.of(2025, 2, 2, 10, 0)));
+        oeuf.getStockMovements().add(new StockMovement(3, 1, MovementType.OUT, 10, Unit.U, LocalDateTime.of(2025, 2, 3, 15, 0)));
 
         LocalDateTime currentDate = LocalDateTime.of(2025, 2, 24, 12, 0);
         assertEquals(80, oeuf.getAvailableQuantity(currentDate));
@@ -97,8 +97,8 @@ public class IngredientTest {
         sel.addPriceHistory(3.0, LocalDateTime.of(2025, 2, 1, 8, 0));
         ingredientDAO.saveAll(List.of(sel));
 
-        StockMovement selEntry1 = new StockMovement(0, sel.getId(), MovementType.ENTRY, 500, Unit.G, LocalDateTime.of(2025, 2, 1, 8, 0));
-        StockMovement selExit1 = new StockMovement(0, sel.getId(), MovementType.EXIT, 100, Unit.G, LocalDateTime.of(2025, 2, 2, 10, 0));
+        StockMovement selEntry1 = new StockMovement(0, sel.getId(), MovementType.IN, 500, Unit.G, LocalDateTime.of(2025, 2, 1, 8, 0));
+        StockMovement selExit1 = new StockMovement(0, sel.getId(), MovementType.OUT, 100, Unit.G, LocalDateTime.of(2025, 2, 2, 10, 0));
 
         stockMovementImpl.saveStockMovement(selEntry1);
         stockMovementImpl.saveStockMovement(selExit1);
@@ -109,7 +109,7 @@ public class IngredientTest {
 
         assertNotNull(retrievedIngredient);
         assertEquals("Sel", retrievedIngredient.getName());
-        assertEquals(3.0, retrievedIngredient.getUnitPrice());
-        assertEquals(400, retrievedIngredient.getRequiredQuantity());
+        assertEquals(3.0, retrievedIngredient.getActualPrice());
+        assertEquals(400, retrievedIngredient.getAvailableQuantity());
     }
 }

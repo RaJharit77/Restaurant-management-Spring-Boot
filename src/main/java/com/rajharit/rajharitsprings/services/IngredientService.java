@@ -37,7 +37,7 @@ public class IngredientService {
 
         if (maxPrice != null) {
             ingredients = ingredients.stream()
-                    .filter(ingredient -> ingredient.getUnitPrice() <= maxPrice)
+                    .filter(ingredient -> ingredient.getActualPrice() <= maxPrice)
                     .collect(Collectors.toList());
         }
 
@@ -104,7 +104,7 @@ public class IngredientService {
                 .max(Comparator.comparing(PriceHistory::getDate))
                 .orElseThrow();
 
-        ingredient.setUnitPrice(latestPrice.getPrice());
+        ingredient.setActualPrice(latestPrice.getPrice());
         ingredient.setUpdateDateTime(latestPrice.getDate());
         ingredientRepository.updateCurrentPrice(ingredientId, latestPrice.getPrice(), latestPrice.getDate());
     }
@@ -121,13 +121,17 @@ public class IngredientService {
 
         List<StockMovement> movements = stockMovementDtos.stream()
                 .map(dto -> {
-                    MovementType movementType = MovementType.valueOf(dto.getMovementType().toUpperCase());
-                    Unit unit = Unit.valueOf(dto.getUnit().toUpperCase());
+                    MovementType movementType = MovementType.valueOf(String.valueOf(dto.getMovementType()));
+                    Unit unit = Unit.valueOf(String.valueOf(dto.getUnit()));
                     return new StockMovement(0, ingredientId, movementType,
                             dto.getQuantity(), unit, dto.getMovementDate());
                 })
                 .collect(Collectors.toList());
 
         ingredientRepository.saveStockMovements(ingredientId, movements);
+    }
+
+    public void deleteIngredientId(int id) {
+        ingredientRepository.deleteIngredient(id);
     }
 }

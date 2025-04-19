@@ -119,12 +119,12 @@ public class DishTest {
     @Test
     void testGetAvailableQuantity() {
         Ingredient sausage = new Ingredient(1, "Saucisse", 20, Unit.G, LocalDateTime.now(), 100);
-        sausage.getStockMovements().add(new StockMovement(1, 1, MovementType.ENTRY, 500, Unit.G, LocalDateTime.of(2025, 2, 1, 8, 0)));
-        sausage.getStockMovements().add(new StockMovement(2, 1, MovementType.EXIT, 200, Unit.G, LocalDateTime.of(2025, 2, 2, 10, 0)));
+        sausage.getStockMovements().add(new StockMovement(1, 1, MovementType.IN, 500, Unit.G, LocalDateTime.of(2025, 2, 1, 8, 0)));
+        sausage.getStockMovements().add(new StockMovement(2, 1, MovementType.OUT, 200, Unit.G, LocalDateTime.of(2025, 2, 2, 10, 0)));
 
         Ingredient oil = new Ingredient(2, "Huile", 10000, Unit.L, LocalDateTime.now(), 0.15);
-        oil.getStockMovements().add(new StockMovement(3, 2, MovementType.ENTRY, 20, Unit.L, LocalDateTime.of(2025, 2, 1, 8, 0)));
-        oil.getStockMovements().add(new StockMovement(4, 2, MovementType.EXIT, 5, Unit.L, LocalDateTime.of(2025, 2, 2, 10, 0)));
+        oil.getStockMovements().add(new StockMovement(3, 2, MovementType.IN, 20, Unit.L, LocalDateTime.of(2025, 2, 1, 8, 0)));
+        oil.getStockMovements().add(new StockMovement(4, 2, MovementType.OUT, 5, Unit.L, LocalDateTime.of(2025, 2, 2, 10, 0)));
 
         ingredientDAO.saveAll(List.of(sausage, oil));
 
@@ -137,11 +137,11 @@ public class DishTest {
         LocalDateTime date = LocalDateTime.of(2025, 2, 3, 12, 0);
 
         double sausageAvailable = sausage.getAvailableQuantity(date);
-        double sausageRequired = sausage.getRequiredQuantity();
+        double sausageRequired = sausage.getAvailableQuantity();
         double sausageDishQuantity = sausageAvailable / sausageRequired;
 
         double oilAvailable = oil.getAvailableQuantity(date);
-        double oilRequired = oil.getRequiredQuantity();
+        double oilRequired = oil.getAvailableQuantity();
         double oilDishQuantity = oilAvailable / oilRequired;
 
         double expectedAvailableQuantity = Math.min(sausageDishQuantity, oilDishQuantity);

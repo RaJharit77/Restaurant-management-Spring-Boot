@@ -4,6 +4,7 @@ import com.rajharit.rajharitsprings.dtos.IngredientDto;
 import com.rajharit.rajharitsprings.dtos.PriceDto;
 import com.rajharit.rajharitsprings.dtos.StockMovementDto;
 import com.rajharit.rajharitsprings.services.IngredientService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -70,5 +71,11 @@ public class IngredientController {
     public ResponseEntity<List<StockMovementDto>> getIngredientStockMovements(@PathVariable int id) {
         List<StockMovementDto> movements = ingredientService.getIngredientStockMovements(id);
         return ResponseEntity.ok(movements);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteIngredientId(int id) {
+        ingredientService.deleteIngredientId(id);
+        return ResponseEntity.noContent().build();
     }
 }

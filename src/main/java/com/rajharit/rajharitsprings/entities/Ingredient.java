@@ -12,10 +12,10 @@ import lombok.*;
 public class Ingredient {
     private int id;
     private String name;
-    private double unitPrice;
+    private double actualPrice;
     private Unit unit;
     private LocalDateTime updateDateTime;
-    private double requiredQuantity;
+    private double availableQuantity;
     private List<PriceHistory> priceHistory;
     private List<StockMovement> stockMovements;
 
@@ -24,21 +24,21 @@ public class Ingredient {
         this.stockMovements = new ArrayList<>();
     }
 
-    public Ingredient(int id, String name, double unitPrice, Unit unit, LocalDateTime updateDateTime, double requiredQuantity) {
+    public Ingredient(int id, String name, double actualPrice, Unit unit, LocalDateTime updateDateTime, double availableQuantity) {
         this.id = id;
         this.name = name;
-        this.unitPrice = unitPrice;
+        this.actualPrice = actualPrice;
         this.unit = unit;
         this.updateDateTime = updateDateTime;
-        this.requiredQuantity = requiredQuantity;
+        this.availableQuantity = availableQuantity;
         this.priceHistory = new ArrayList<>();
         this.stockMovements = new ArrayList<>();
-        this.priceHistory.add(new PriceHistory(unitPrice, updateDateTime));
+        this.priceHistory.add(new PriceHistory(actualPrice, updateDateTime));
     }
 
     public void addPriceHistory(double price, LocalDateTime date) {
         this.priceHistory.add(new PriceHistory(price, date));
-        this.unitPrice = price;
+        this.actualPrice = price;
         this.updateDateTime = date;
     }
 
@@ -54,9 +54,9 @@ public class Ingredient {
         return stockMovements.stream()
                 .filter(movement -> movement.getMovementDate().isBefore(date))
                 .mapToDouble(movement -> {
-                    if (movement.getMovementType() == MovementType.ENTRY) {
+                    if (movement.getMovementType() == MovementType.IN) {
                         return movement.getQuantity();
-                    } else if (movement.getMovementType() == MovementType.EXIT) {
+                    } else if (movement.getMovementType() == MovementType.OUT) {
                         return - movement.getQuantity();
                     }
                     return 0;

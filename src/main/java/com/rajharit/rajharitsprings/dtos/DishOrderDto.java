@@ -3,13 +3,10 @@ package com.rajharit.rajharitsprings.dtos;
 import com.rajharit.rajharitsprings.entities.StatusType;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
-public class OrderDishDto {
+public class DishOrderDto {
     private int dishId;
     private String dishName;
-    private double dishPrice;
-    private int quantity;
-    private StatusType status;
+    private int quantityOrdered;
+    private StatusType actualOrderStatus;
 }

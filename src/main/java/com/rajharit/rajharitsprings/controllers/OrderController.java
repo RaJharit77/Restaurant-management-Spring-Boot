@@ -28,6 +28,16 @@ public class OrderController {
         }
     }
 
+    @PostMapping("/{reference}")
+    public ResponseEntity<OrderDto> createOrder(@PathVariable String reference) {
+        try {
+            OrderDto createdOrder = orderService.createOrder(reference);
+            return ResponseEntity.ok(createdOrder);
+        } catch (BusinessException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @PutMapping("/{reference}/dishes")
     public ResponseEntity<OrderDto> updateOrderDishes(
             @PathVariable String reference,
@@ -55,5 +65,11 @@ public class OrderController {
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteOrderId(int id) {
+        orderService.deleteOrderId(id);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -37,12 +37,12 @@ public class OrderDishOrderTest {
         Order order = new Order();
         order.setReference("ORDER-001");
         order.setCreatedAt(LocalDateTime.now());
-        order.setStatus(StatusType.CREATED);
+        order.setActualStatus(StatusType.CREATED);
 
         Order savedOrder = orderDAO.save(order);
         assertNotNull(savedOrder.getOrderId());
         assertEquals("ORDER-001", savedOrder.getReference());
-        assertEquals(StatusType.CREATED, savedOrder.getStatus());
+        assertEquals(StatusType.CREATED, savedOrder.getActualStatus());
     }
 
     @Test
@@ -50,7 +50,7 @@ public class OrderDishOrderTest {
         Order order = new Order();
         order.setReference("ORDER-004");
         order.setCreatedAt(LocalDateTime.now());
-        order.setStatus(StatusType.CREATED);
+        order.setActualStatus(StatusType.CREATED);
 
         Order existingOrder = orderDAO.findByReference(order.getReference());
         if (existingOrder != null) {
@@ -62,7 +62,7 @@ public class OrderDishOrderTest {
 
         assertNotNull(retrievedOrder);
         assertEquals("ORDER-004", retrievedOrder.getReference());
-        assertEquals(StatusType.CREATED, retrievedOrder.getStatus());
+        assertEquals(StatusType.CREATED, retrievedOrder.getActualStatus());
     }
 
     @Test
@@ -70,13 +70,13 @@ public class OrderDishOrderTest {
         Order order = new Order();
         order.setReference("ORDER-002");
         order.setCreatedAt(LocalDateTime.now());
-        order.setStatus(StatusType.CREATED);
+        order.setActualStatus(StatusType.CREATED);
 
         Order savedOrder = orderDAO.save(order);
         orderDAO.updateStatus(savedOrder.getOrderId(), StatusType.CONFIRMED);
 
         Order updatedOrder = orderDAO.findById(savedOrder.getOrderId());
-        assertEquals(StatusType.CONFIRMED, updatedOrder.getStatus());
+        assertEquals(StatusType.CONFIRMED, updatedOrder.getActualStatus());
     }
 
     @Test
@@ -89,7 +89,7 @@ public class OrderDishOrderTest {
         Order order = new Order();
         order.setReference("ORDER-003");
         order.setCreatedAt(LocalDateTime.now());
-        order.setStatus(StatusType.CREATED);
+        order.setActualStatus(StatusType.CREATED);
 
         Order savedOrder = orderDAO.save(order);
 
@@ -110,7 +110,7 @@ public class OrderDishOrderTest {
         Order order = new Order();
         order.setReference("ORDER-001");
         order.setCreatedAt(LocalDateTime.now());
-        order.setStatus(StatusType.CREATED);
+        order.setActualStatus(StatusType.CREATED);
 
         Order savedOrder = orderDAO.save(order);
         assertNotNull(savedOrder.getOrderId());
@@ -127,7 +127,7 @@ public class OrderDishOrderTest {
         Order order = new Order();
         order.setReference("ORDER-002");
         order.setCreatedAt(LocalDateTime.now());
-        order.setStatus(StatusType.CREATED);
+        order.setActualStatus(StatusType.CREATED);
 
         Order savedOrder = orderDAO.save(order);
         assertNotNull(savedOrder.getOrderId());
@@ -159,7 +159,7 @@ public class OrderDishOrderTest {
         Order order = new Order();
         order.setReference("ORDER-005");
         order.setCreatedAt(LocalDateTime.now());
-        order.setStatus(StatusType.CREATED);
+        order.setActualStatus(StatusType.CREATED);
 
         DishOrder dishOrder1 = new DishOrder();
         dishOrder1.setDish(dish1);
@@ -211,13 +211,13 @@ public class OrderDishOrderTest {
 
         Ingredient ingredient = new Ingredient();
         ingredient.setName("Ingrédient test");
-        ingredient.setUnitPrice(10);
+        ingredient.setActualPrice(10);
         ingredient.setUnit(Unit.U);
         ingredient.setUpdateDateTime(LocalDateTime.now());
-        ingredient.setRequiredQuantity(1);
+        ingredient.setAvailableQuantity(1);
 
         ingredient.getStockMovements().add(new StockMovement(
-                0, 0, MovementType.ENTRY, 10, Unit.U, LocalDateTime.now()
+                0, 0, MovementType.IN, 10, Unit.U, LocalDateTime.now()
         ));
 
         Dish dish = new Dish();
@@ -240,9 +240,9 @@ public class OrderDishOrderTest {
         Order order = new Order();
         order.setReference("ORDER-STATUS-TEST");
         order.setCreatedAt(LocalDateTime.now());
-        order.setStatus(StatusType.CONFIRMED);
+        order.setActualStatus(StatusType.CONFIRMED);
 
         assertThrows(InvalidStatusTransitionException.class,
-                () -> order.updateStatus(StatusType.SERVED));
+                () -> order.updateStatus(StatusType.DELIVERED));
     }
 }

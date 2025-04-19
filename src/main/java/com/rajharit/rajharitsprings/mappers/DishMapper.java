@@ -30,8 +30,8 @@ public class DishMapper {
     private DishIngredientDto toDishIngredientDto(Ingredient ingredient) {
         DishIngredientDto dto = new DishIngredientDto();
         dto.setIngredientId(ingredient.getId());
-        dto.setQuantity(ingredient.getRequiredQuantity());
-        dto.setUnit(ingredient.getUnit().name());
+        dto.setQuantity(ingredient.getAvailableQuantity());
+        dto.setUnit(ingredient.getUnit());
         return dto;
     }
 }

@@ -10,6 +10,7 @@ import com.rajharit.rajharitsprings.dao.DishDAO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -58,8 +59,8 @@ public class OrderService {
         }
 
         if (orderUpdate.getStatus() != null) {
-            validateStatusTransition(order.getStatus(), StatusType.valueOf(orderUpdate.getStatus()));
-            order.setStatus(StatusType.valueOf(orderUpdate.getStatus()));
+            validateStatusTransition(order.getActualStatus(), StatusType.valueOf(String.valueOf(orderUpdate.getStatus())));
+            order.setActualStatus(StatusType.valueOf(String.valueOf(orderUpdate.getStatus())));
         }
 
         List<DishOrder> dishOrders = orderUpdate.getDishes().stream()
@@ -73,7 +74,7 @@ public class OrderService {
                     dishOrder.setDish(dish);
                     dishOrder.setQuantity(dto.getQuantity());
                     dishOrder.setStatus(
-                            order.getStatus() == StatusType.CONFIRMED ?
+                            order.getActualStatus() == StatusType.CONFIRMED ?
                                     StatusType.CONFIRMED :
                                     StatusType.CREATED
                     );
@@ -105,6 +106,21 @@ public class OrderService {
         orderDAO.save(order);
     }
 
+    @Transactional
+    public OrderDto createOrder(String reference) {
+        if (orderDAO.findByReference(reference) != null) {
+            throw new BusinessException("Order reference already exists");
+        }
+
+        Order order = new Order();
+        order.setReference(reference);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setActualStatus(StatusType.CREATED);
+
+        Order savedOrder = orderDAO.save(order);
+        return orderMapper.toDto(savedOrder);
+    }
+
     private void validateStatusTransition(StatusType current, StatusType next) {
         if (current == next) {
             return;
@@ -117,29 +133,28 @@ public class OrderService {
                 }
                 break;
             case CONFIRMED:
-                if (next != StatusType.IN_PREPARATION) {
+                if (next != StatusType.IN_PROGRESS) {
                     throw new BusinessException("Invalid status transition from CONFIRMED to " + next);
                 }
                 break;
-            case IN_PREPARATION:
+            case IN_PROGRESS:
                 if (next != StatusType.FINISHED) {
-                    throw new BusinessException("Invalid status transition from IN_PREPARATION to " + next);
+                    throw new BusinessException("Invalid status transition from IN_PROGRESS to " + next);
                 }
                 break;
             case FINISHED:
-                if (next != StatusType.COMPLETED) {
+                if (next != StatusType.DELIVERED) {
                     throw new BusinessException("Invalid status transition from FINISHED to " + next);
                 }
                 break;
-            case COMPLETED:
-                if (next != StatusType.SERVED) {
-                    throw new BusinessException("Invalid status transition from COMPLETED to " + next);
-                }
-                break;
-            case SERVED:
-                throw new BusinessException("Cannot change status from SERVED");
+            case DELIVERED:
+                throw new BusinessException("Cannot change status from DELIVERED");
             default:
                 throw new BusinessException("Unknown status: " + current);
         }
+    }
+
+    public void deleteOrderId(int id) {
+        orderDAO.delete(id);
     }
 }

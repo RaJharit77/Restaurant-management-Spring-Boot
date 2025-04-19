@@ -1,5 +1,7 @@
 package com.rajharit.rajharitsprings.dtos;
 
+import com.rajharit.rajharitsprings.entities.MovementType;
+import com.rajharit.rajharitsprings.entities.Unit;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -7,8 +9,8 @@ import java.time.LocalDateTime;
 @Data
 public class StockMovementDto {
     private int id;
-    private String movementType;
+    private MovementType movementType;
     private double quantity;
-    private String unit;
+    private Unit unit;
     private LocalDateTime movementDate;
 }

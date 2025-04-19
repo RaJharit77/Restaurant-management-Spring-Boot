@@ -28,7 +28,7 @@ public class OrderDAOImpl implements OrderDAO {
                 order.setOrderId(resultSet.getInt("order_id"));
                 order.setReference(resultSet.getString("reference"));
                 order.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
-                order.setStatus(StatusType.valueOf(resultSet.getString("status")));
+                order.setActualStatus(StatusType.valueOf(resultSet.getString("status")));
                 orders.add(order);
             }
         } catch (SQLException e) {
@@ -49,7 +49,7 @@ public class OrderDAOImpl implements OrderDAO {
                 order.setOrderId(resultSet.getInt("order_id"));
                 order.setReference(resultSet.getString("reference"));
                 order.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
-                order.setStatus(StatusType.valueOf(resultSet.getString("status")));
+                order.setActualStatus(StatusType.valueOf(resultSet.getString("status")));
                 return order;
             }
         } catch (SQLException e) {
@@ -75,7 +75,7 @@ public class OrderDAOImpl implements OrderDAO {
                 order.setOrderId(resultSet.getInt("order_id"));
                 order.setReference(resultSet.getString("reference"));
                 order.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
-                order.setStatus(StatusType.valueOf(resultSet.getString("status")));
+                order.setActualStatus(StatusType.valueOf(resultSet.getString("status")));
 
                 dishOrderStatement.setInt(1, order.getOrderId());
                 ResultSet dishOrderResult = dishOrderStatement.executeQuery();
@@ -110,7 +110,7 @@ public class OrderDAOImpl implements OrderDAO {
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setString(1, order.getReference());
             statement.setTimestamp(2, Timestamp.valueOf(order.getCreatedAt()));
-            statement.setString(3, order.getStatus().name());
+            statement.setString(3, order.getActualStatus().name());
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 order.setOrderId(resultSet.getInt("order_id"));
@@ -147,7 +147,7 @@ public class OrderDAOImpl implements OrderDAO {
                 order.setOrderId(resultSet.getInt("order_id"));
                 order.setReference(resultSet.getString("reference"));
                 order.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
-                order.setStatus(StatusType.valueOf(resultSet.getString("status")));
+                order.setActualStatus(StatusType.valueOf(resultSet.getString("status")));
                 orders.add(order);
             }
         } catch (SQLException e) {

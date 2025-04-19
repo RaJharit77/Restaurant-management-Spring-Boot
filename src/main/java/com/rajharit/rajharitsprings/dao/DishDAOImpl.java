@@ -95,7 +95,7 @@ public class DishDAOImpl implements DishDAO {
                         for (Ingredient ingredient : dish.getIngredients()) {
                             dishIngredientStatement.setInt(1, dish.getId());
                             dishIngredientStatement.setInt(2, ingredient.getId());
-                            dishIngredientStatement.setDouble(3, ingredient.getRequiredQuantity());
+                            dishIngredientStatement.setDouble(3, ingredient.getAvailableQuantity());
                             dishIngredientStatement.setString(4, ingredient.getUnit().name());
                             dishIngredientStatement.executeUpdate();
                         }

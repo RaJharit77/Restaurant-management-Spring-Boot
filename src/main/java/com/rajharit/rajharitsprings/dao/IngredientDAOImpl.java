@@ -54,7 +54,7 @@ public class IngredientDAOImpl implements IngredientDAO {
                 Ingredient ingredient = new Ingredient();
                 ingredient.setId(resultSet.getInt("ingredient_id"));
                 ingredient.setName(resultSet.getString("name"));
-                ingredient.setUnitPrice(resultSet.getDouble("unit_price"));
+                ingredient.setActualPrice(resultSet.getDouble("unit_price"));
                 ingredient.setUnit(Unit.valueOf(resultSet.getString("unit")));
                 ingredient.setUpdateDateTime(resultSet.getTimestamp("update_datetime").toLocalDateTime());
                 return ingredient;
@@ -65,11 +65,11 @@ public class IngredientDAOImpl implements IngredientDAO {
         return null;
     }
 
-    @Override
+    /*@Override
     public List<Ingredient> saveAll(List<Ingredient> ingredients) {
-        String insertQuery = "INSERT INTO Ingredient (name, unit_price, unit, update_datetime) VALUES (?, ?, ?::unit_type, ?)";
-        String updateQuery = "UPDATE Ingredient SET name = ?, unit_price = ?, unit = ?::unit_type, update_datetime = ? WHERE ingredient_id = ?";  // Changé ici
-        String priceHistoryQuery = "INSERT INTO Price_History (ingredient_id, price, date) VALUES (?, ?, ?)";
+        String insertQuery = "INSERT INTO Ingredient (name, unit_price, unit, update_datetime) VALUES (?, ?, ?::unit_type, ?) ON CONFLICT DO NOTHING";
+        String updateQuery = "UPDATE Ingredient SET name = ?, unit_price = ?, unit = ?::unit_type, update_datetime = ? WHERE ingredient_id = ?";
+        String priceHistoryQuery = "INSERT INTO Price_History (ingredient_id, price, date) VALUES (?, ?, ?) ON CONFLICT DO NOTHING";
 
         try (Connection connection = dataBaseSource.getConnection()) {
             connection.setAutoCommit(false);
@@ -81,7 +81,7 @@ public class IngredientDAOImpl implements IngredientDAO {
                 for (Ingredient ingredient : ingredients) {
                     if (ingredient.getId() == 0) {
                         insertStatement.setString(1, ingredient.getName());
-                        insertStatement.setDouble(2, ingredient.getUnitPrice());
+                        insertStatement.setDouble(2, ingredient.getActualPrice());
                         insertStatement.setString(3, ingredient.getUnit().name());
                         insertStatement.setTimestamp(4, java.sql.Timestamp.valueOf(ingredient.getUpdateDateTime()));
                         insertStatement.executeUpdate();
@@ -92,7 +92,7 @@ public class IngredientDAOImpl implements IngredientDAO {
                         }
                     } else {
                         updateStatement.setString(1, ingredient.getName());
-                        updateStatement.setDouble(2, ingredient.getUnitPrice());
+                        updateStatement.setDouble(2, ingredient.getActualPrice());
                         updateStatement.setString(3, ingredient.getUnit().name());
                         updateStatement.setTimestamp(4, java.sql.Timestamp.valueOf(ingredient.getUpdateDateTime()));
                         updateStatement.setInt(5, ingredient.getId());
@@ -114,6 +114,59 @@ public class IngredientDAOImpl implements IngredientDAO {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error managing database connection", e);
+        }
+
+        return ingredients;
+    }*/
+
+    @Override
+    public List<Ingredient> saveAll(List<Ingredient> ingredients) {
+        String insertQuery = "INSERT INTO Ingredient (ingredient_id, name, unit_price, unit, update_datetime) " +
+                "VALUES (?, ?, ?, ?::unit_type, ?) " +
+                "ON CONFLICT (ingredient_id) DO UPDATE SET " +
+                "name = EXCLUDED.name, " +
+                "unit_price = EXCLUDED.unit_price, " +
+                "unit = EXCLUDED.unit, " +
+                "update_datetime = EXCLUDED.update_datetime";
+
+        String priceHistoryQuery = "INSERT INTO Price_History (ingredient_id, price, date) VALUES (?, ?, ?) " +
+                "ON CONFLICT DO NOTHING";
+
+        try (Connection connection = dataBaseSource.getConnection()) {
+            connection.setAutoCommit(false);
+
+            try (PreparedStatement ingredientStatement = connection.prepareStatement(insertQuery);
+                 PreparedStatement priceStatement = connection.prepareStatement(priceHistoryQuery)) {
+
+                for (Ingredient ingredient : ingredients) {
+                    ingredientStatement.setInt(1, ingredient.getId());
+                    ingredientStatement.setString(2, ingredient.getName());
+                    ingredientStatement.setDouble(3, ingredient.getActualPrice());
+                    ingredientStatement.setString(4, ingredient.getUnit().name());
+                    ingredientStatement.setTimestamp(5, Timestamp.valueOf(ingredient.getUpdateDateTime()));
+                    ingredientStatement.addBatch();
+                }
+                ingredientStatement.executeBatch();
+
+                for (Ingredient ingredient : ingredients) {
+                    if (ingredient.getPriceHistory() != null) {
+                        for (PriceHistory price : ingredient.getPriceHistory()) {
+                            priceStatement.setInt(1, ingredient.getId());
+                            priceStatement.setDouble(2, price.getPrice());
+                            priceStatement.setTimestamp(3, Timestamp.valueOf(price.getDate()));
+                            priceStatement.addBatch();
+                        }
+                    }
+                }
+                priceStatement.executeBatch();
+
+                connection.commit();
+            } catch (SQLException e) {
+                connection.rollback();
+                throw new RuntimeException("Error saving ingredients: " + e.getMessage(), e);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error managing database connection: " + e.getMessage(), e);
         }
 
         return ingredients;
@@ -282,7 +335,7 @@ public class IngredientDAOImpl implements IngredientDAO {
 
                 if (priceResultSet.next()) {
                     double priceAtDate = priceResultSet.getDouble("price");
-                    ingredient.setUnitPrice(priceAtDate);
+                    ingredient.setActualPrice(priceAtDate);
                 }
 
                 stockStatement.setInt(1, ingredientId);
@@ -294,14 +347,14 @@ public class IngredientDAOImpl implements IngredientDAO {
                     MovementType movementType = MovementType.valueOf(stockResultSet.getString("movement_type"));
                     double quantity = stockResultSet.getDouble("quantity");
 
-                    if (movementType == MovementType.ENTRY) {
+                    if (movementType == MovementType.IN) {
                         availableQuantity += quantity;
-                    } else if (movementType == MovementType.EXIT) {
+                    } else if (movementType == MovementType.OUT) {
                         availableQuantity -= quantity;
                     }
                 }
 
-                ingredient.setRequiredQuantity(availableQuantity);
+                ingredient.setAvailableQuantity(availableQuantity);
 
                 return ingredient;
             }

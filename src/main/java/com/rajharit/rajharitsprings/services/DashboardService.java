@@ -28,7 +28,7 @@ public class DashboardService {
 
     public List<BestSalesDto> getBestSales() {
         List<Order> finishedOrders = orderDAO.getAll().stream()
-                .filter(order -> order.getStatus() == StatusType.FINISHED)
+                .filter(order -> order.getActualStatus() == StatusType.FINISHED)
                 .collect(Collectors.toList());
 
         Map<Dish, Integer> dishQuantityMap = new HashMap<>();
