@@ -65,60 +65,6 @@ public class IngredientDAOImpl implements IngredientDAO {
         return null;
     }
 
-    /*@Override
-    public List<Ingredient> saveAll(List<Ingredient> ingredients) {
-        String insertQuery = "INSERT INTO Ingredient (name, unit_price, unit, update_datetime) VALUES (?, ?, ?::unit_type, ?) ON CONFLICT DO NOTHING";
-        String updateQuery = "UPDATE Ingredient SET name = ?, unit_price = ?, unit = ?::unit_type, update_datetime = ? WHERE ingredient_id = ?";
-        String priceHistoryQuery = "INSERT INTO Price_History (ingredient_id, price, date) VALUES (?, ?, ?) ON CONFLICT DO NOTHING";
-
-        try (Connection connection = dataBaseSource.getConnection()) {
-            connection.setAutoCommit(false);
-
-            try (PreparedStatement insertStatement = connection.prepareStatement(insertQuery, PreparedStatement.RETURN_GENERATED_KEYS);
-                 PreparedStatement updateStatement = connection.prepareStatement(updateQuery);
-                 PreparedStatement priceHistoryStatement = connection.prepareStatement(priceHistoryQuery)) {
-
-                for (Ingredient ingredient : ingredients) {
-                    if (ingredient.getId() == 0) {
-                        insertStatement.setString(1, ingredient.getName());
-                        insertStatement.setDouble(2, ingredient.getActualPrice());
-                        insertStatement.setString(3, ingredient.getUnit().name());
-                        insertStatement.setTimestamp(4, java.sql.Timestamp.valueOf(ingredient.getUpdateDateTime()));
-                        insertStatement.executeUpdate();
-
-                        ResultSet generatedKeys = insertStatement.getGeneratedKeys();
-                        if (generatedKeys.next()) {
-                            ingredient.setId(generatedKeys.getInt(1));
-                        }
-                    } else {
-                        updateStatement.setString(1, ingredient.getName());
-                        updateStatement.setDouble(2, ingredient.getActualPrice());
-                        updateStatement.setString(3, ingredient.getUnit().name());
-                        updateStatement.setTimestamp(4, java.sql.Timestamp.valueOf(ingredient.getUpdateDateTime()));
-                        updateStatement.setInt(5, ingredient.getId());
-                        updateStatement.executeUpdate();
-                    }
-
-                    for (PriceHistory priceHistory : ingredient.getPriceHistory()) {
-                        priceHistoryStatement.setInt(1, ingredient.getId());
-                        priceHistoryStatement.setDouble(2, priceHistory.getPrice());
-                        priceHistoryStatement.setTimestamp(3, java.sql.Timestamp.valueOf(priceHistory.getDate()));
-                        priceHistoryStatement.executeUpdate();
-                    }
-                }
-
-                connection.commit();
-            } catch (SQLException e) {
-                connection.rollback();
-                throw new RuntimeException("Error saving ingredients", e);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error managing database connection", e);
-        }
-
-        return ingredients;
-    }*/
-
     @Override
     public List<Ingredient> saveAll(List<Ingredient> ingredients) {
         String insertQuery = "INSERT INTO Ingredient (ingredient_id, name, unit_price, unit, update_datetime) " +
@@ -146,6 +92,7 @@ public class IngredientDAOImpl implements IngredientDAO {
                     ingredientStatement.setTimestamp(5, Timestamp.valueOf(ingredient.getUpdateDateTime()));
                     ingredientStatement.addBatch();
                 }
+
                 ingredientStatement.executeBatch();
 
                 for (Ingredient ingredient : ingredients) {
@@ -158,6 +105,7 @@ public class IngredientDAOImpl implements IngredientDAO {
                         }
                     }
                 }
+
                 priceStatement.executeBatch();
 
                 connection.commit();
@@ -278,7 +226,6 @@ public class IngredientDAOImpl implements IngredientDAO {
                         Unit.valueOf(resultSet.getString("unit")),
                         resultSet.getTimestamp("update_datetime").toLocalDateTime(),
                         0
-
                 );
                 ingredients.add(ingredient);
             }

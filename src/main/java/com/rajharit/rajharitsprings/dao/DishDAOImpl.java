@@ -63,7 +63,7 @@ public class DishDAOImpl implements DishDAO {
     @Override
     public List<Dish> saveAll(List<Dish> dishes) {
         String insertQuery = "INSERT INTO Dish (name, unit_price) VALUES (?, ?)";
-        String updateQuery = "UPDATE Dish SET name = ?, unit_price = ? WHERE id = ?";
+        String updateQuery = "UPDATE Dish SET name = ?, unit_price = ? WHERE dish_id = ?";
         String dishIngredientQuery = "INSERT INTO Dish_Ingredient (dish_id, ingredient_id, quantity, unit) VALUES (?, ?, ?, ?::unit_type) "
                 + "ON CONFLICT (dish_id, ingredient_id) DO UPDATE SET quantity = EXCLUDED.quantity, unit = EXCLUDED.unit";
 

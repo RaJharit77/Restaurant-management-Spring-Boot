@@ -11,6 +11,7 @@ import com.rajharit.rajharitsprings.dao.DishDAOImpl;
 import com.rajharit.rajharitsprings.dao.IngredientDAOImpl;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,20 +42,26 @@ public class DishService {
             throw new ResourceNotFoundException("Dish not found with id: " + id);
         }
 
-        List<Ingredient> dishIngredients = ingredients.stream()
-                .map(dto -> {
-                    Ingredient ingredient = ingredientRepository.findById(dto.getIngredientId());
-                    if (ingredient == null) {
-                        throw new ResourceNotFoundException("Ingredient not found with id: " + dto.getIngredientId());
-                    }
-                    ingredient.setAvailableQuantity(dto.getQuantity());
-                    ingredient.setUnit(dto.getUnit());
-                    return ingredient;
-                })
-                .collect(Collectors.toList());
+        List<Ingredient> dishIngredients = new ArrayList<>();
+
+        for (DishIngredientDto dto : ingredients) {
+            Ingredient ingredient = ingredientRepository.findById(dto.getIngredientId());
+            if (ingredient == null) {
+                throw new ResourceNotFoundException("Ingredient not found with id: " + dto.getIngredientId());
+            }
+
+            Ingredient dishIngredient = new Ingredient();
+            dishIngredient.setId(ingredient.getId());
+            dishIngredient.setName(ingredient.getName());
+            dishIngredient.setActualPrice(ingredient.getActualPrice());
+            dishIngredient.setUnit(dto.getUnit());
+            dishIngredient.setAvailableQuantity(dto.getQuantity());
+
+            dishIngredients.add(dishIngredient);
+        }
 
         dish.setIngredients(dishIngredients);
-        Dish updatedDish = (Dish) dishRepository.saveAll((List<Dish>) dish);
+        Dish updatedDish = dishRepository.saveAll(List.of(dish)).get(0);
         return dishMapper.toDto(updatedDish);
     }
 
