@@ -11,9 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -97,7 +97,7 @@ public class OrderService {
                 dishOrder.setStatusHistory(statusHistory);
 
                 if (!statusHistory.isEmpty()) {
-                    dishOrder.setStatus(statusHistory.get(statusHistory.size()-1).getStatus());
+                    dishOrder.setStatus(statusHistory.getLast().getStatus());
                 }
             });
             order.setDishOrders(dishOrders);
@@ -106,7 +106,7 @@ public class OrderService {
             order.setStatusHistory(orderStatusHistory);
 
             if (!orderStatusHistory.isEmpty()) {
-                order.setActualStatus(orderStatusHistory.get(orderStatusHistory.size()-1).getStatus());
+                order.setActualStatus(orderStatusHistory.getLast().getStatus());
             }
             OrderDto dto = orderMapper.toDto(order);
             dto.setTotalAmount(order.getTotalAmount());
@@ -126,11 +126,12 @@ public class OrderService {
 
         List<DishOrder> dishOrders = dishOrderDAO.findByOrderId(order.getOrderId());
 
-        return order.getDishOrders().stream()
+        return dishOrders.stream()
                 .map(dishOrder -> {
+                    Dish dish = dishDAO.findById(dishOrder.getDish().getId());
                     DishOrderDto dto = new DishOrderDto();
-                    dto.setDishId(dishOrder.getDish().getId());
-                    dto.setDishName(dishOrder.getDish().getName());
+                    dto.setDishId(dish.getId());
+                    dto.setDishName(dish.getName());
                     dto.setQuantity(dishOrder.getQuantity());
                     dto.setActualOrderStatus(dishOrder.getStatus());
                     return dto;
@@ -151,32 +152,71 @@ public class OrderService {
                 throw new ResourceNotFoundException("Plat non trouvé avec l'ID: " + dishOrderDto.getDishId());
             }
 
-            boolean dishExists = order.getDishOrders().stream()
-                    .anyMatch(dishOrder -> dishOrder.getDish().getId() == dishOrderDto.getDishId());
+            List<DishOrder> existingDishOrders = dishOrderDAO.findByOrderId(order.getOrderId());
+            Optional<DishOrder> existingDishOrder = existingDishOrders.stream()
+                    .filter(d -> d.getDish().getId() == dishOrderDto.getDishId())
+                    .findFirst();
 
-            if (dishExists) {
-                throw new BusinessException("Le plat existe déjà dans la commande");
+            if (existingDishOrder.isPresent()) {
+                DishOrder dishOrder = existingDishOrder.get();
+                dishOrder.setQuantity(dishOrder.getQuantity() + dishOrderDto.getQuantity());
+                dishOrderDAO.save(dishOrder);
+            } else {
+                DishOrder dishOrder = new DishOrder();
+                dishOrder.setDish(dish);
+                dishOrder.setOrder(order);
+                dishOrder.setQuantity(dishOrderDto.getQuantity());
+                dishOrder.setStatus(StatusType.CREATED);
+
+                DishOrder savedDishOrder = dishOrderDAO.save(dishOrder);
+
+                DishOrderStatus initialStatus = new DishOrderStatus();
+                initialStatus.setStatus(StatusType.CREATED);
+                initialStatus.setChangedAt(LocalDateTime.now());
+                dishOrderStatusDAO.save(initialStatus, savedDishOrder.getDishOrderId());
             }
 
-            DishOrder dishOrder = new DishOrder();
-            dishOrder.setDish(dish);
-            dishOrder.setOrder(order);
-            dishOrder.setQuantity(dishOrderDto.getQuantity());
-            dishOrder.setStatus(StatusType.CREATED);
-
-            DishOrder savedDishOrder = dishOrderDAO.save(dishOrder);
-
-            DishOrderStatus initialStatus = new DishOrderStatus();
-            initialStatus.setStatus(StatusType.CREATED);
-            initialStatus.setChangedAt(LocalDateTime.now());
-            dishOrderStatusDAO.save(initialStatus, savedDishOrder.getDishOrderId());
-
-            Order refreshedOrder = orderDAO.findByReference(reference);
-            return orderMapper.toDto(refreshedOrder);
+            return orderMapper.toDto(order);
         } catch (Exception e) {
-            logger.error("Erreur lors de l'ajout du plat", e);
+            logger.error("Erreur inattendue lors de l'ajout du plat", e);
             throw new BusinessException("Erreur lors de l'ajout du plat: " + e.getMessage());
         }
+    }
+
+    @Transactional
+    public OrderDto updateDishStatus(String reference, int dishId, StatusType status) {
+        Order order = orderDAO.findByReference(reference);
+        if (order == null) {
+            throw new ResourceNotFoundException("Order not found with reference: " + reference);
+        }
+
+        List<DishOrder> dishOrders = dishOrderDAO.findByOrderId(order.getOrderId());
+        order.setDishOrders(dishOrders);
+
+        DishOrder dishOrder = dishOrders.stream()
+                .filter(d -> d.getDish().getId() == dishId)
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Dish with id " + dishId + " not found in order " + reference));
+
+        validateDishStatusTransition(dishOrder.getStatus(), status);
+        dishOrder.setStatus(status);
+
+        DishOrderStatus dishOrderStatus = new DishOrderStatus();
+        dishOrderStatus.setStatus(status);
+        dishOrderStatus.setChangedAt(LocalDateTime.now());
+        dishOrderStatusDAO.save(dishOrderStatus, dishOrder.getDishOrderId());
+
+        if (status == StatusType.DELIVERED &&
+                dishOrders.stream().allMatch(d -> d.getStatus() == StatusType.DELIVERED)) {
+            order.setActualStatus(StatusType.DELIVERED);
+            OrderStatus orderStatus = new OrderStatus();
+            orderStatus.setStatus(StatusType.DELIVERED);
+            orderStatus.setChangedAt(LocalDateTime.now());
+            orderStatusDAO.save(orderStatus, order.getOrderId());
+        }
+
+        dishOrderDAO.save(dishOrder);
+        return orderMapper.toDto(order);
     }
 
     @Transactional
@@ -209,39 +249,6 @@ public class OrderService {
             order.getDishOrders().add(dishOrder);
         });
 
-        return orderMapper.toDto(order);
-    }
-
-    @Transactional
-    public OrderDto updateDishStatus(String reference, int dishId, StatusType status) {
-        Order order = orderDAO.findByReference(reference);
-        if (order == null) {
-            throw new ResourceNotFoundException("Order not found with reference: " + reference);
-        }
-
-        DishOrder dishOrder = order.getDishOrders().stream()
-                .filter(dishOrderItem -> dishOrderItem.getDish().getId() == dishId)
-                .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Dish with id " + dishId + " not found in order " + reference));
-
-        validateDishStatusTransition(dishOrder.getStatus(), status);
-        dishOrder.setStatus(status);
-
-        DishOrderStatus dishOrderStatus = new DishOrderStatus();
-        dishOrderStatus.setStatus(status);
-        dishOrderStatus.setChangedAt(LocalDateTime.now());
-        dishOrderStatusDAO.save(dishOrderStatus, dishOrder.getDishOrderId());
-
-        if (status == StatusType.DELIVERED &&
-                order.getDishOrders().stream().allMatch(d -> d.getStatus() == StatusType.DELIVERED)) {
-            order.setActualStatus(StatusType.DELIVERED);
-            OrderStatus orderStatus = new OrderStatus();
-            orderStatus.setStatus(StatusType.DELIVERED);
-            orderStatus.setChangedAt(LocalDateTime.now());
-            orderStatusDAO.save(orderStatus, order.getOrderId());
-        }
-
-        dishOrderDAO.save(dishOrder);
         return orderMapper.toDto(order);
     }
 

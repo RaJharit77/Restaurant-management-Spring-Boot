@@ -53,7 +53,9 @@ public class DishOrderDAOImpl implements DishOrderDAO {
                 dishOrder.setDishOrderId(rs.getInt("dish_order_id"));
                 dishOrder.setQuantity(rs.getInt("quantity"));
 
-                Dish dish = dishDAO.findById(rs.getInt("dish_id"));
+                Dish dish = new Dish();
+                dish.setId(rs.getInt("dish_id"));
+
                 dishOrder.setDish(dish);
 
                 dishOrders.add(dishOrder);
